@@ -56,28 +56,19 @@ def classificarDiccionari(dicpath):
 
     dic = {}
     for linies in open(dicpath):
-        paraula = linies.split('\n')
 
+        paraula = linies.split('\n')
         mida = len(paraula[0])
-        p = linies[:-1]
-        bArr = bytearray(p, 'utf8')
+        bArr = bytearray(paraula[0], 'utf8')
         asciiWord = []
         for letter in bArr:
             asciiWord.append(letter)
-        asciiWordNp = np.array(asciiWord, dtype=np.int8)
-
-
 
         if mida in dic:
-            nparr = np.append(dic[mida], asciiWordNp)
-            dic[mida]=nparr
+            dic[mida] = np.append(dic[mida], [asciiWord], axis = 0)
 
         else:
-            nparr = np.array([], dtype=np.int8)
-            nparr = np.append(nparr, asciiWordNp)
-            dic[mida]=nparr
-
-
+            dic[mida] = np.array([asciiWord])
 
     return dic
 
