@@ -55,32 +55,32 @@ def seleccioTest():
     return obtenirTaulell(crossword), diccionari
 
 @profile
-def classificarDiccionari(dicpath):
+def classificarDiccionari(dictPath):
 
-    dic = {}
-    for linies in open(dicpath):
-        paraula = linies.split('\n')[0]
+    # Dictionary with all the words.
+    # Each key is the size of the word.
+    # Each value is a 2D numpy array. The first dimension is the word,
+    # the second dimension contains the letter from each word.
 
-        mida = len(paraula)
-        byteArr = bytearray(paraula, 'ansi')
-        asciiWord = []
-        for letter in byteArr:
-            asciiWord.append(letter)
-        asciiWordNp = np.array(asciiWord, dtype=np.uint8)
+    dict = {}
 
-        if mida in dic:
-            nparr = np.append(dic[mida], asciiWordNp)
-            dic[mida] = nparr
+    for line in open(dictPath):
+        word = line[:-1]
+        size = len(word)
+        byteArr = bytearray(word, 'ansi')
+        asciiWord = list(byteArr)
+
+        if size in dict:
+            dict[size].append(asciiWord)
         else:
-            nparr = np.array([], dtype=np.uint8)
-            nparr = np.append(nparr, asciiWordNp)
-            dic[mida]=nparr
+            dict[size] = [asciiWord]
 
-    for k, v in dic.items():
-        v = np.reshape(v, (-1, k))
-        dic[k] = v
+    # Transforming list into numpy array
+    for k, v in dict.items():
+        numpyArr = np.array(v, dtype=np.uint8)
+        dict[k] = numpyArr
 
-    return dic
+    return dict
 
 
 if __name__ == '__main__':
