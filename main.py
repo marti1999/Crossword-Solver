@@ -3,6 +3,8 @@ import math
 import numpy as np
 import sys
 import time
+# https://plugins.jetbrains.com/plugin/16536-line-profiler
+from line_profiler_pycharm import profile
 
 #pasa el taulell a INT
 def taulellStringToINT(taulell):
@@ -48,21 +50,21 @@ def imprimirTaulell(taulell):
 def seleccioTest():
 
     crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_CB_v2.txt"
+    diccionari = "diccionari_A.txt"
 
     return obtenirTaulell(crossword), diccionari
 
+@profile
 def classificarDiccionari(dicpath):
 
     dic = {}
     for linies in open(dicpath):
-        paraula = linies.split('\n')
+        paraula = linies.split('\n')[0]
 
-        mida = len(paraula[0])
-        p = linies[:-1]
-        bArr = bytearray(p, 'ansi')
+        mida = len(paraula)
+        byteArr = bytearray(paraula, 'ansi')
         asciiWord = []
-        for letter in bArr:
+        for letter in byteArr:
             asciiWord.append(letter)
         asciiWordNp = np.array(asciiWord, dtype=np.uint8)
 
