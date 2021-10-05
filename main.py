@@ -56,19 +56,27 @@ def classificarDiccionari(dicpath):
 
     dic = {}
     for linies in open(dicpath):
-
         paraula = linies.split('\n')
+
         mida = len(paraula[0])
-        bArr = bytearray(paraula[0], 'iso-8859-1')
+        p = linies[:-1]
+        bArr = bytearray(p, 'ansi')
         asciiWord = []
         for letter in bArr:
             asciiWord.append(letter)
+        asciiWordNp = np.array(asciiWord, dtype=np.uint8)
 
         if mida in dic:
-            dic[mida] = np.append(dic[mida], [asciiWord], axis = 0)
-
+            nparr = np.append(dic[mida], asciiWordNp)
+            dic[mida] = nparr
         else:
-            dic[mida] = np.array([asciiWord], dtype=np.uint8)
+            nparr = np.array([], dtype=np.uint8)
+            nparr = np.append(nparr, asciiWordNp)
+            dic[mida]=nparr
+
+    for k, v in dic.items():
+        v = np.reshape(v, (-1, k))
+        dic[k] = v
 
     return dic
 
@@ -77,9 +85,14 @@ if __name__ == '__main__':
     taulell, dicpath = seleccioTest()
 
 
-    tempsTrigat = time.time()
+    start = time.time()
 
     dic = classificarDiccionari(dicpath)
+
+
+    end = time.time()
+    temps = end-start
+    print("temps: %d", temps)
 
 
 
