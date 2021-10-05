@@ -1,3 +1,4 @@
+import copy
 import math
 import numpy as np
 import sys
@@ -5,7 +6,6 @@ import time
 
 #pasa el taulell a INT
 def taulellStringToINT(taulell):
-    linea = []
     result = []
     for j in range(0, (len(taulell))):
         linea = taulell[j].split()
@@ -44,30 +44,48 @@ def imprimirTaulell(taulell):
         for j in range(0,len(taulell[i])):
             sys.stdout.write(taulell[i][j])
 
-# archius en el que agafarem les dades
-def seleccioTest(opcio):
-    if opcio == "2":
-        crossword = "crossword_A_v2.txt"
-        diccionari = "diccionari_A.txt"
-    else:
-        crossword = "crossword_CB_v2.txt"
-        diccionari = "diccionari_CB_v2.txt"
+# arxius dels que s'agafen les dades
+def seleccioTest():
+
+    crossword = "crossword_CB_v2.txt"
+    diccionari = "diccionari_CB_v2.txt"
 
     return obtenirTaulell(crossword), diccionari
 
 def classificarDiccionari(dicpath):
+
     dic = {}
-    for paraula in open(dicpath):
-        
+    for linies in open(dicpath):
+        paraula = linies.split('\n')
+
+        mida = len(paraula)
+
+        bArr = bytearray(paraula, 'utf8')
+        asciiWord = []
+        for letter in bArr:
+            asciiWord.append(letter)
+        asciiWordNp = np.array(asciiWord, dtype=np.int8)
+
+
+
+        if mida in dic:
+            dic[mida] = np.array([], dtype=np.int8)
+        else:
+            dic[mida] = np.array([], dtype=np.int8)
+
+
+
+    return dic
+
 
 if __name__ == '__main__':
-    opcio = input("1.Petit\n2.Gran\nEscoje opció (qualsevol altre numero escull la petita): ")
-    taulell, dicpath = seleccioTest(opcio)
+    taulell, dicpath = seleccioTest()
+
 
     tempsTrigat = time.time()
 
     dic = classificarDiccionari(dicpath)
-    imprimirTaulell(taulell)
+
 
 
 
