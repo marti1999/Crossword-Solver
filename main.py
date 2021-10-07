@@ -13,8 +13,6 @@ class Word:
         self.length = length
         #self.intersections = intersections
 
-
-
 def read_crossword(crossword):
 
     table = []
@@ -51,15 +49,38 @@ def lookupHorizontalVariables(npTable):
             foundWords.append(word)
     return foundWords
 
+def lookupVerticalVariables(npTable):
+    foundWords = []
+    for y in range(0, npTable.shape[1]):
+        len = 0
+        for x in range(1, npTable.shape[0]):
+            if len == 0:
+                if npTable[x-1][y] != 1 and npTable [x][y] != 1:
+                    len = 2
+                    continue
+
+            if len > 1:
+                if npTable[x][y] != 1:
+                    len +=1
+                    continue
+                else:
+                    pos = (x-len, y)
+                    foundWords.append(Word(pos, 0, len))
+                    len = 0
+        if len > 1:
+            pos = (npTable.shape[0]-len, y)
+            word = Word(pos, 0, len)
+            foundWords.append(word)
+    return foundWords
+
 # arxius dels que s'agafen les dades
 def seleccioTest():
 
-    crossword = "crossword_CB_v2.txt"
+    crossword = "crossword_A_v2.txt"
     diccionari = "diccionari_CB_v2.txt"
 
     return crossword, diccionari
 
-@profile
 def classificarDiccionari(dictPath):
 
     # Dictionary with all the words.
@@ -88,22 +109,24 @@ def classificarDiccionari(dictPath):
     return dict
 
 
-if __name__ == '__main__':
+@profile
+def main():
     crosswordPath, dicPath = seleccioTest()
-
 
     start = time.time()
 
     crossword = read_crossword(crosswordPath)
     words = lookupHorizontalVariables(crossword)
-
+    words += lookupVerticalVariables(crossword)
 
     dic = classificarDiccionari(dicPath)
 
-
     end = time.time()
-    temps = end-start
+    temps = end - start
     print("temps: %d", temps)
+
+if __name__ == '__main__':
+    main()
 
 
 
