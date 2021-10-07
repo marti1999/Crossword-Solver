@@ -6,15 +6,100 @@ import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
 from line_profiler_pycharm import profile
 
+class Intersection:
+    def __init__(self, coord, index, intersectedID):
+        self.coord = coord
+        self.index = index
+        self.intersectedID = intersectedID
+
 class Word:
-    def __init__(self, pos, horizontal, length):
+    def __init__(self, pos, horizontal, length, remainingValues, idN):
         self.pos = pos
         self.horizontal = horizontal
         self.length = length
-        #self.intersections = intersections
+        self.remainingValues = remainingValues
+        self.letters = [0] * length
+        self.id = idN
+        self.intersections = []
+
+
+def getIdByCoordVertical(coord, verticalWords):
+    for w in verticalWords:
+        if w.pos[1] == coord[1]:
+            if w.pos[0] <= coord[0] <= w.pos[0]+w.length:
+                return w.id
+    return -1
+
+
+def getIdByCoordHorizontal(coord, horizontalWords):
+    for w in horizontalWords:
+        if w.pos[0] == coord[0]:
+            if w.pos[1] <= coord[1] <= w.pos[1]+w.length:
+                return w.id
+    return -1
+
+
+def lookupIntersections(words, horizontalWords, verticalWords, crossword):
+    for w in words:
+        if w.horizontal == 1:
+            yStart = w.pos[1]
+            yEnd = yStart + w.length -1
+            for y in range(yStart, yEnd+1):
+                if w.pos[0] > 0:
+                    if crossword[w.pos[0]-1][y] == 0:
+                        index = y - w.pos[1]
+                        intersectedId = getIdByCoordVertical((w.pos[0], y), verticalWords)
+                        w.intersections.append(Intersection((w.pos[0], y), index, intersectedId))
+                        continue
+                if w.pos[0] < crossword.shape[0]-1:
+                    if crossword[w.pos[0]+1][y] == 0:
+                        index = y - w.pos[1]
+                        intersectedId = getIdByCoordVertical((w.pos[0],y), verticalWords)
+                        w.intersections.append(Intersection((w.pos[0], y), index, intersectedId))
+        else:
+            xStart = w.pos[0]
+            xEnd = xStart + w.length -1
+            for x in range(xStart, xEnd+1):
+                if w.pos[1] > 0:
+                    if crossword[x][w.pos[1]-1] == 0:
+                        index = x - w.pos[0]
+                        intersectedId = getIdByCoordHorizontal((x, w.pos[1]), horizontalWords)
+                        w.intersections.append(Intersection((x, w.pos[1]), index, intersectedId))
+                        continue
+                if w.pos[1] < crossword.shape[1]-1:
+                    if crossword[x][w.pos[1]+1] == 0:
+                        index =  x - w.pos[0]
+                        intersectedId = getIdByCoordHorizontal((x, w.pos[1]), horizontalWords)
+                        w.intersections.append(Intersection((x, w.pos[1]), index, intersectedId))
+
+    return words
+
+
+def meetsRestriction(cWord, lva, r):  # TODO fill this function
+
+    intersections = cWord.intersections
+
+    for i in intersections:
+        if i.intersectedId not in lva:
+            continue
+
+        intersectedWord = lva[i.intersectedId]
+        candidateValue = cWord.letters[i.index]
+
+        if intersectedWord.horizontal == 1:
+            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+        else:
+            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+
+        if intersectedValue != candidateValue:
+            return False
+
+    return True
+
 
 def read_crossword(crossword):
-
     table = []
     for line in open(crossword):
         noTabs = list(line.split())
@@ -25,13 +110,22 @@ def read_crossword(crossword):
     npTable = np.array(table, dtype=np.uint8)
     return npTable
 
-def lookupHorizontalVariables(npTable):
+
+def printCrossword(crossword):
+    # crossword = np.where(crossword[:] ==1, '#', crossword)
+
+    print('\n'.join([''.join(['{:4}'.format(item)
+                              for item in row]) for row in crossword]))
+
+
+def lookupHorizontalVariables(npTable, idN):
     foundWords = []
+
     for x in range(0, npTable.shape[0]):
         len = 0
         for y in range(1, npTable.shape[1]):
             if len == 0:
-                if npTable[x][y-1] != 1 and npTable[x][y] != 1:
+                if npTable[x][y - 1] != 1 and npTable[x][y] != 1:
                     len = 2
                     continue
             if len > 1:
@@ -39,50 +133,54 @@ def lookupHorizontalVariables(npTable):
                     len += 1
                     continue
                 else:
-                    pos = (x, y-len)
-                    foundWords.append(Word(pos, 1, len))
+                    pos = (x, y - len)
+                    foundWords.append(Word(pos, 1, len, len, idN))
+                    idN += 1
                     len = 0
 
         if len > 1:
-            pos = (x,npTable.shape[1]-len)
-            word = Word(pos, 1, len)
+            pos = (x, npTable.shape[1] - len)
+            word = Word(pos, 1, len, len, idN)
+            idN += 1
             foundWords.append(word)
     return foundWords
 
-def lookupVerticalVariables(npTable):
+
+def lookupVerticalVariables(npTable, idN):
     foundWords = []
     for y in range(0, npTable.shape[1]):
         len = 0
         for x in range(1, npTable.shape[0]):
             if len == 0:
-                if npTable[x-1][y] != 1 and npTable [x][y] != 1:
+                if npTable[x - 1][y] != 1 and npTable[x][y] != 1:
                     len = 2
                     continue
 
             if len > 1:
                 if npTable[x][y] != 1:
-                    len +=1
+                    len += 1
                     continue
                 else:
-                    pos = (x-len, y)
-                    foundWords.append(Word(pos, 0, len))
+                    pos = (x - len, y)
+                    foundWords.append(Word(pos, 0, len, len, idN))
+                    idN += 1
                     len = 0
         if len > 1:
-            pos = (npTable.shape[0]-len, y)
-            word = Word(pos, 0, len)
+            pos = (npTable.shape[0] - len, y)
+            word = Word(pos, 0, len, len, idN)
+            idN += 1
             foundWords.append(word)
     return foundWords
 
-# arxius dels que s'agafen les dades
-def seleccioTest():
 
+def seleccioTest():
     crossword = "crossword_A_v2.txt"
     diccionari = "diccionari_CB_v2.txt"
 
     return crossword, diccionari
 
-def classificarDiccionari(dictPath):
 
+def classificarDiccionari(dictPath):
     # Dictionary with all the words.
     # Each key is the size of the word.
     # Each value is a 2D numpy array. The first dimension is the word,
@@ -109,25 +207,55 @@ def classificarDiccionari(dictPath):
     return dict
 
 
+def domain(var, d):
+    return d[var.length]
+
+
+
+def backtracking(lva, lvna, r, d):
+    if not lvna:
+        r = 0
+        return lva, r
+
+    var = lvna[0]
+    lvna.pop(0)
+
+    for cWord in domain(var, d):
+        if meetsRestriction(cWord, lva, r):
+            lva, r = backtracking(lva, lvna, r, d)  # TODO fer l'insertar i update del remaining values
+            if r == 0:
+                r = 0
+                return lva, r
+    return lva, r
+
+
 @profile
 def main():
     crosswordPath, dicPath = seleccioTest()
 
     start = time.time()
 
+
+
     crossword = read_crossword(crosswordPath)
-    words = lookupHorizontalVariables(crossword)
-    words += lookupVerticalVariables(crossword)
+    horizontalWords = lookupHorizontalVariables(crossword, 0)
+    verticalWords= lookupVerticalVariables(crossword, len(horizontalWords))
+
+    words = horizontalWords + verticalWords
+    words.sort(key=lambda x: x.remainingValues)
+
+    words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dic = classificarDiccionari(dicPath)
+
+    #lva = backtracking({}, words, 0, dic)
+
+    printCrossword(crossword)
 
     end = time.time()
     temps = end - start
     print("temps: %d", temps)
 
+
 if __name__ == '__main__':
     main()
-
-
-
-
