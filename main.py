@@ -6,53 +6,58 @@ import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
 from line_profiler_pycharm import profile
 
-#pasa el taulell a INT
-def taulellStringToINT(taulell):
-    result = []
-    for j in range(0, (len(taulell))):
-        linea = taulell[j].split()
+class Word:
+    def __init__(self, pos, horizontal, length):
+        self.pos = pos
+        self.horizontal = horizontal
+        self.length = length
+        #self.intersections = intersections
 
-        if "#" in linea:
-            for index, element in enumerate(linea):
-                if element == '#':
-                    linea[index] = "-1"
 
-        linea = np.array(linea, dtype=(int))
-        result.append(linea)
-    return result
 
-#pasa el taulell a String
-def taulellINTtoString(taulell):
-    linea = []
-    result = []
-    for j in range(0, (len(taulell))):
-        linea = taulell[j]
-        linea[linea == -1] = 35
-        linea = linea.tostring().decode("ascii")
-        linea = list(linea)
-        result.append(linea)
-    return result
+def read_crossword(crossword):
 
-# Obtenim el taulell
-def obtenirTaulell(crosswordFile):
-    taulell = []
-    for linea in open(crosswordFile):
-        taulell.append(linea)
-    return taulellStringToINT(taulell)
+    table = []
+    for line in open(crossword):
+        noTabs = list(line.split())
+        for i, v in enumerate(noTabs):
+            if v == "#":
+                noTabs[i] = "1"
+        table.append(noTabs)
+    npTable = np.array(table, dtype=np.uint8)
+    return npTable
 
-#Impresió del taulell
-def imprimirTaulell(taulell):
-    for i in range(0,len(taulell)):
-        for j in range(0,len(taulell[i])):
-            sys.stdout.write(taulell[i][j])
+def lookupHorizontalVariables(npTable):
+    foundWords = []
+    for x in range(0, npTable.shape[0]):
+        len = 0
+        for y in range(1, npTable.shape[1]):
+            if len == 0:
+                if npTable[x][y-1] != 1 and npTable[x][y] != 1:
+                    len = 2
+                    continue
+            if len > 1:
+                if npTable[x][y] != 1:
+                    len += 1
+                    continue
+                else:
+                    pos = (x, y-len)
+                    foundWords.append(Word(pos, 1, len))
+                    len = 0
+
+        if len > 1:
+            pos = (x,npTable.shape[1]-len)
+            word = Word(pos, 1, len)
+            foundWords.append(word)
+    return foundWords
 
 # arxius dels que s'agafen les dades
 def seleccioTest():
 
     crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_A.txt"
+    diccionari = "diccionari_CB_v2.txt"
 
-    return obtenirTaulell(crossword), diccionari
+    return crossword, diccionari
 
 @profile
 def classificarDiccionari(dictPath):
@@ -84,12 +89,16 @@ def classificarDiccionari(dictPath):
 
 
 if __name__ == '__main__':
-    taulell, dicpath = seleccioTest()
+    crosswordPath, dicPath = seleccioTest()
 
 
     start = time.time()
 
-    dic = classificarDiccionari(dicpath)
+    crossword = read_crossword(crosswordPath)
+    words = lookupHorizontalVariables(crossword)
+
+
+    dic = classificarDiccionari(dicPath)
 
 
     end = time.time()
