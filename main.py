@@ -75,30 +75,6 @@ def lookupIntersections(words, horizontalWords, verticalWords, crossword):
     return words
 
 
-def meetsRestriction(cWord, lva, r):  # TODO fill this function
-
-    intersections = cWord.intersections
-
-    for i in intersections:
-        if i.intersectedId not in lva:
-            continue
-
-        intersectedWord = lva[i.intersectedId]
-        candidateValue = cWord.letters[i.index]
-
-        if intersectedWord.horizontal == 1:
-            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
-            intersectedValue = intersectedWord.letters[intersectionIndex]
-        else:
-            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
-            intersectedValue = intersectedWord.letters[intersectionIndex]
-
-        if intersectedValue != candidateValue:
-            return False
-
-    return True
-
-
 def read_crossword(crossword):
     table = []
     for line in open(crossword):
@@ -114,7 +90,7 @@ def read_crossword(crossword):
 def printCrossword(crossword):
     # crossword = np.where(crossword[:] ==1, '#', crossword)
 
-    print('\n'.join([''.join(['{:4}'.format(item)
+    print('\n'.join([''.join(['{:4}'.format(chr(item))
                               for item in row]) for row in crossword]))
 
 
@@ -174,7 +150,7 @@ def lookupVerticalVariables(npTable, idN):
 
 
 def seleccioTest():
-    crossword = "crossword_A_v2.txt"
+    crossword = "crossword_CB_v2.txt"
     diccionari = "diccionari_CB_v2.txt"
 
     return crossword, diccionari
@@ -211,6 +187,29 @@ def domain(var, d):
     return d[var.length]
 
 
+def restrictionsOK(var, cWord, lva, r):
+
+    intersections = var.intersections
+
+    for i in intersections:
+        if i.intersectedID not in lva:
+            continue
+
+        intersectedWord = lva[i.intersectedID]
+        candidateValue = cWord[i.index]
+
+        if intersectedWord.horizontal == 1:
+            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+        else:
+            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+
+        if intersectedValue != candidateValue:
+            return False
+
+    return True
+
 
 def backtracking(lva, lvna, r, d):
     if not lvna:
@@ -220,14 +219,35 @@ def backtracking(lva, lvna, r, d):
     var = lvna[0]
     lvna.pop(0)
 
-    for cWord in domain(var, d):
-        if meetsRestriction(cWord, lva, r):
-            lva, r = backtracking(lva, lvna, r, d)  # TODO fer l'insertar i update del remaining values
-            if r == 0:
+    domainValues = domain(var, d)
+    for cWord in domainValues:
+        if restrictionsOK(var, cWord, lva, r):
+
+            # TODO fer l'insertar i update del remaining values en un funció
+            var.letters = cWord.tolist()
+            lva[var.id] = var
+
+            lva, r = backtracking(lva, lvna, r, d)
+            if len(lvna) == 0 or r == 0:
                 r = 0
                 return lva, r
     return lva, r
 
+
+def storeLvaToCrossword(lva, crossword):
+    for word in lva.values():
+        index = 0
+        if word.horizontal == 1:
+            x = word.pos[0]
+            for y in range(word.pos[1], word.pos[1] + word.length):
+                crossword[x][y] = word.letters[index]
+                index += 1
+        else:
+            y = word.pos[1]
+            for x in range(word.pos[0], word.pos[0] + word.length):
+                crossword[x][y] = word.letters[index]
+                index += 1
+    return crossword
 
 @profile
 def main():
@@ -246,10 +266,11 @@ def main():
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
-    dic = classificarDiccionari(dicPath)
+    dict = classificarDiccionari(dicPath)
 
-    #lva = backtracking({}, words, 0, dic)
+    lva, r = backtracking({}, words, 0, dict)
 
+    crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
 
     end = time.time()
