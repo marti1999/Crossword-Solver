@@ -2,6 +2,7 @@ import copy
 import math
 import numpy as np
 import sys
+import random
 import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
 from line_profiler_pycharm import profile
@@ -234,8 +235,8 @@ def restrictionsOK(var, cWord, lva, r):
 
 def backtracking(lva, lvna, r, d, crossword): #TODO esborrar el parametre crossword i el print
 
-   # crossword = storeLvaToCrossword(lva, crossword)
-   # printCrossword(crossword)
+    # crossword = storeLvaToCrossword(lva, crossword)
+    # printCrossword(crossword)
 
     if not lvna:
         r = 1
@@ -254,12 +255,13 @@ def backtracking(lva, lvna, r, d, crossword): #TODO esborrar el parametre crossw
             if len(lvna) == 0 or r == 1:
                 r = 1
                 return lva, r
+
     r = 0
     return lva, r
 
 
 
-
+#TODO important treure els @profile abans d'entregar
 @profile
 def main():
     crosswordPath, dicPath = seleccioTest()
@@ -273,7 +275,8 @@ def main():
     verticalWords= lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    words.sort(key=lambda x: x.remainingValues)
+    #words.sort(key=lambda x: x.remainingValues)
+    random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
