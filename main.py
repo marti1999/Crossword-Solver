@@ -185,17 +185,22 @@ def classificarDiccionari(dictPath):
     # the second dimension contains the letter from each word.
 
     dict = {}
-    asciiWord = []
-    asciiCopy = []
+
     for line in open(dictPath):
-        size = len(line[:-1])
-        asciiWord = [ord(character) for character in line[:-1]]
-        asciiCopy = asciiWord[:]
+        word = line[:-1]
+        size = len(word)
+        byteArr = bytearray(word, 'ansi')
+        asciiWord = list(byteArr)
+
         if size in dict:
-            dict[size].append(asciiCopy)
+            dict[size].append(asciiWord)
         else:
-            dict[size] = [asciiCopy]
-        asciiWord.clear()
+            dict[size] = [asciiWord]
+
+    # Transforming list into numpy array
+    for k, v in dict.items():
+        numpyArr = np.array(v, dtype=np.uint8)
+        dict[k] = numpyArr
 
     return dict
 
@@ -228,36 +233,46 @@ def restrictionsOK(var, cWord, lva, r):
     return True
 
 
-def backtracking(lva, lvna, r, d): #TODO esborrar el parametre crossword i el print
+def backtracking(lva, lvna, d, crossword, level, resolt): #TODO esborrar el parametre crossword, level, i el print crossword
 
-    # crossword = storeLvaToCrossword(lva, crossword)
-    # printCrossword(crossword)
+    crossword = storeLvaToCrossword(lva, crossword)
+    printCrossword(crossword)
+
+    level += 1
 
     if not lvna:
-        r = 1
-        return lva, r
+        # print("lvna empty: level = ", level)
+        return lva, 1
 
     var = lvna[0]
 
     domainValues = domain(var, d)
     for cWord in domainValues:
-        if restrictionsOK(var, cWord, lva, r):
+
+        # if level == 4 and lva[5].letters[0] == 80 and lva[5].letters[1] == 73: # and lva[6].letters == 82 and lva[8].letters == 77:
+        #     print("level 4 after BORE")
+
+
+        if restrictionsOK(var, cWord, lva, 0):
             # TODO fer l'insertar i update del remaining values en una funció
-            var.letters = cWord
+            var.letters = cWord.tolist()
             lva[var.id] = var
 
-            lva, r = backtracking(lva, lvna[1:], r, d)
-            if len(lvna) == 0 or r == 1:
-                r = 1
-                return lva, r
+            lva, resolt = backtracking(lva, lvna[1:], d, crossword, level, resolt)
+            if resolt == 1:
+                return lva, resolt
 
-    r = 0
-    return lva, r
+    # if level == 6:
+    #     print("aquí")
+    # print("Dead end: level = ", level)
+
+    if resolt == 0 and var.id in lva:
+        lva.pop(var.id)
+    return lva, 0
 
 
 
 #TODO important treure els @profile abans d'entregar
-@profile
 def main():
     crosswordPath, dicPath = seleccioTest()
 
@@ -267,17 +282,17 @@ def main():
 
     crossword = read_crossword(crosswordPath)
     horizontalWords = lookupHorizontalVariables(crossword, 0)
-    verticalWords= lookupVerticalVariables(crossword, len(horizontalWords))
+    verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    words.sort(key=lambda x: x.remainingValues)
+    #words.sort(key=lambda x: x.remainingValues)
     random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = classificarDiccionari(dicPath)
 
-    lva, r = backtracking({}, words, 0, dict)
+    lva, resolt = backtracking({}, words, dict, crossword, 0, 0)
 
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
