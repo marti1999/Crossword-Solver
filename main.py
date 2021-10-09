@@ -50,7 +50,7 @@ def imprimirTaulell(taulell):
 def seleccioTest():
 
     crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_A.txt"
+    diccionari = "diccionari_CB_v2.txt"
 
     return obtenirTaulell(crossword), diccionari
 
@@ -63,22 +63,17 @@ def classificarDiccionari(dictPath):
     # the second dimension contains the letter from each word.
 
     dict = {}
-
+    asciiWord = []
+    asciiCopy = []
     for line in open(dictPath):
-        word = line[:-1]
-        size = len(word)
-        byteArr = bytearray(word, 'ansi')
-        asciiWord = list(byteArr)
-
+        size = len(line[:-1])
+        asciiWord = [ord(character) for character in line[:-1]]
+        asciiCopy = asciiWord[:]
         if size in dict:
-            dict[size].append(asciiWord)
+            dict[size].append(asciiCopy)
         else:
-            dict[size] = [asciiWord]
-
-    # Transforming list into numpy array
-    for k, v in dict.items():
-        numpyArr = np.array(v, dtype=np.uint8)
-        dict[k] = numpyArr
+            dict[size] = [asciiCopy]
+        asciiWord.clear()
 
     return dict
 
@@ -90,8 +85,6 @@ if __name__ == '__main__':
     start = time.time()
 
     dic = classificarDiccionari(dicpath)
-
-
     end = time.time()
     temps = end-start
     print("temps: %d", temps)
