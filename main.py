@@ -185,22 +185,17 @@ def classificarDiccionari(dictPath):
     # the second dimension contains the letter from each word.
 
     dict = {}
-
+    asciiWord = []
+    asciiCopy = []
     for line in open(dictPath):
-        word = line[:-1]
-        size = len(word)
-        byteArr = bytearray(word, 'ansi')
-        asciiWord = list(byteArr)
-
+        size = len(line[:-1])
+        asciiWord = [ord(character) for character in line[:-1]]
+        asciiCopy = asciiWord[:]
         if size in dict:
-            dict[size].append(asciiWord)
+            dict[size].append(asciiCopy)
         else:
-            dict[size] = [asciiWord]
-
-    # Transforming list into numpy array
-    for k, v in dict.items():
-        numpyArr = np.array(v, dtype=np.uint8)
-        dict[k] = numpyArr
+            dict[size] = [asciiCopy]
+        asciiWord.clear()
 
     return dict
 
@@ -233,7 +228,7 @@ def restrictionsOK(var, cWord, lva, r):
     return True
 
 
-def backtracking(lva, lvna, r, d, crossword): #TODO esborrar el parametre crossword i el print
+def backtracking(lva, lvna, r, d): #TODO esborrar el parametre crossword i el print
 
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
@@ -248,10 +243,10 @@ def backtracking(lva, lvna, r, d, crossword): #TODO esborrar el parametre crossw
     for cWord in domainValues:
         if restrictionsOK(var, cWord, lva, r):
             # TODO fer l'insertar i update del remaining values en una funció
-            var.letters = cWord.tolist()
+            var.letters = cWord
             lva[var.id] = var
 
-            lva, r = backtracking(lva, lvna[1:], r, d, crossword)
+            lva, r = backtracking(lva, lvna[1:], r, d)
             if len(lvna) == 0 or r == 1:
                 r = 1
                 return lva, r
@@ -275,14 +270,14 @@ def main():
     verticalWords= lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    #words.sort(key=lambda x: x.remainingValues)
+    words.sort(key=lambda x: x.remainingValues)
     random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = classificarDiccionari(dicPath)
 
-    lva, r = backtracking({}, words, 0, dict, crossword)
+    lva, r = backtracking({}, words, 0, dict)
 
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
