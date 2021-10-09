@@ -23,7 +23,8 @@ class Word:
         self.id = idN
         self.intersections = []
 
-
+# function to know this word is vertical
+# return the id of word vertical or -1 if not is vertical
 def getIdByCoordVertical(coord, verticalWords):
     for w in verticalWords:
         if w.pos[1] == coord[1]:
@@ -31,7 +32,8 @@ def getIdByCoordVertical(coord, verticalWords):
                 return w.id
     return -1
 
-
+# function to know this word is horizontal
+# return the id of word horizontal or -1 if not is horizontal
 def getIdByCoordHorizontal(coord, horizontalWords):
     for w in horizontalWords:
         if w.pos[0] == coord[0]:
@@ -204,10 +206,8 @@ def classificarDiccionari(dictPath):
 
     return dict
 
-
 def domain(var, d):
     return d[var.length]
-
 
 def restrictionsOK(var, cWord, lva, r):
 
@@ -232,16 +232,14 @@ def restrictionsOK(var, cWord, lva, r):
 
     return True
 
+def insertLva(lva, var, cWord):
+    var.letters = cWord.tolist()
+    lva[var.id] = var
+    return lva
 
-def backtracking(lva, lvna, d, crossword, level, resolt): #TODO esborrar el parametre crossword, level, i el print crossword
-
-    crossword = storeLvaToCrossword(lva, crossword)
-    printCrossword(crossword)
-
-    level += 1
+def backtracking(lva, lvna, d, r):
 
     if not lvna:
-        # print("lvna empty: level = ", level)
         return lva, 1
 
     var = lvna[0]
@@ -249,50 +247,37 @@ def backtracking(lva, lvna, d, crossword, level, resolt): #TODO esborrar el para
     domainValues = domain(var, d)
     for cWord in domainValues:
 
-        # if level == 4 and lva[5].letters[0] == 80 and lva[5].letters[1] == 73: # and lva[6].letters == 82 and lva[8].letters == 77:
-        #     print("level 4 after BORE")
-
-
         if restrictionsOK(var, cWord, lva, 0):
-            # TODO fer l'insertar i update del remaining values en una funció
-            var.letters = cWord.tolist()
-            lva[var.id] = var
+            lva = insertLva(lva, var, cWord)
+            lva, r = backtracking(lva, lvna[1:], d, r)
+            if r == 1:
+                return lva, r
 
-            lva, resolt = backtracking(lva, lvna[1:], d, crossword, level, resolt)
-            if resolt == 1:
-                return lva, resolt
-
-    # if level == 6:
-    #     print("aquí")
-    # print("Dead end: level = ", level)
-
-    if resolt == 0 and var.id in lva:
+    # if not is complete the cossword and word is in LVA
+    # delete from LVA because the word no use for the solution
+    if r == 0 and var.id in lva:
         lva.pop(var.id)
+
     return lva, 0
 
-
-
-#TODO important treure els @profile abans d'entregar
 def main():
     crosswordPath, dicPath = seleccioTest()
 
-    start = time.time()
-
-
-
     crossword = read_crossword(crosswordPath)
+
+    start = time.time()
     horizontalWords = lookupHorizontalVariables(crossword, 0)
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    #words.sort(key=lambda x: x.remainingValues)
-    random.shuffle(words)
+    words.sort(key=lambda x: x.remainingValues)
+    #random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = classificarDiccionari(dicPath)
 
-    lva, resolt = backtracking({}, words, dict, crossword, 0, 0)
+    lva, r = backtracking({}, words, dict, 0)
 
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
