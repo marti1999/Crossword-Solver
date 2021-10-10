@@ -271,12 +271,16 @@ def domainUpdate(var, cWord, d):
             if cWord[intersection.index] == var.letters[intersection.index] or var.letters[intersection.index] == 0:
                 for key in d:
                     for number,words in enumerate(d[key]):
-                        if words[intersection.index] != var.letters[intersection.index]:
-                            return d, True
-                        d.pop(var.length, words)
+                        if set(words) != set(cWord):
+                            if words[intersection.index] != cWord[intersection.index]:
+                                #no funciona
+                                d[key].index(words)
+                                np.where(d[key], words)
+                                d[key].remove(words)
+
                 if d[key].any():
                     return d, False
-
+    return d, True
 
 
 def backtrackingForwardChecking(lva, lvna, d, r):
@@ -293,7 +297,7 @@ def backtrackingForwardChecking(lva, lvna, d, r):
             d, modify = domainUpdate(var, cWord, d)
             if modify == True:
                 lva = insertLva(lva, var, cWord)
-                lva, r = backtracking(lva, lvna[1:], d, r)
+                lva, r = backtrackingForwardChecking(lva, lvna[1:], d, r)
                 if r == 1:
                     return lva, r
 
