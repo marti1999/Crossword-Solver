@@ -223,7 +223,7 @@ def fillupDictionary(dictPath):
 
 
 def domain(var, d):
-    return d[var.length]
+    return d[var.id]
 
 
 def restrictionsOK(var, cWord, lva, r):
@@ -250,7 +250,7 @@ def restrictionsOK(var, cWord, lva, r):
 
 
 def insertLva(lva, var, cWord):
-    #var.letters = cWord.tolist()
+    # var.letters = cWord.tolist()
     lva[var.id] = var
     return lva
 
@@ -279,8 +279,10 @@ def backtracking(lva, lvna, d, r):
     return lva, 0
 
 
-def updateDomainsOK(cWord, var, lvna, cr, d):
+@profile
+def updateDomains(var, lvna, cr, d):
     isDomainOk = True
+    dTemp = copy.deepcopy(d)
 
     for inter in var.intersections:
         intersectedWordIndex = None
@@ -291,7 +293,7 @@ def updateDomainsOK(cWord, var, lvna, cr, d):
             continue
 
         wordIntersected = lvna[intersectedWordIndex]
-        tempDomain = copy.deepcopy(d[wordIntersected.length])
+        tempDomain = copy.deepcopy(dTemp[wordIntersected.id])
         for wii in wordIntersected.intersections:
             existingValue = cr[wii.coord[0]][wii.coord[1]]
             if existingValue > 64: #is a letter
@@ -302,34 +304,45 @@ def updateDomainsOK(cWord, var, lvna, cr, d):
                     break
         if not isDomainOk:
             break
+        dTemp[wordIntersected.id] = tempDomain
 
-    return isDomainOk
+    if not isDomainOk:
+        return False
+    else:
+        return dTemp
+
 
 @profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
         return lva, 1
 
-    #printCrossword(crosswordRestrictions)
+    printCrossword(crosswordRestrictions)
     var = lvna[0]
 
     domainValues = domain(var, d)
     for cWord in domainValues:
 
-        if restrictionsOK(var, cWord, lva, 0):
+        if not restrictionsOK(var, cWord, lva, 0):
+            continue
 
-            #varTemp = copy.deepcopy(var)
-            var.letters = cWord.tolist()
+        var.letters = cWord.tolist()
+        crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
+
+        updateDomainsResult = updateDomains(var, lvna, crosswordRestrictions, d)
+
+        if not updateDomainsResult:
+            var.letters = [0] * var.length
             crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
+            continue
 
-            if updateDomainsOK(cWord, var, lvna, crosswordRestrictions, d):
-                lva = insertLva(lva, var, cWord)
+        # if not updateDomains(var, lvna, crosswordRestrictions, d):
+        #     continue
 
-                lva, r = backtrackingForwardChecking(lva, lvna[1:], d, r, crosswordRestrictions)
-                if r == 1:
-                    return lva, r
-
-
+        lva = insertLva(lva, var, cWord)
+        lva, r = backtrackingForwardChecking(lva, lvna[1:], updateDomainsResult, r, crosswordRestrictions)
+        if r == 1:
+            return lva, r
 
     # deleting the found value for current var if
     # it was  a dead-end on deeper calls of the function
@@ -337,6 +350,14 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
         lva.pop(var.id)
 
     return lva, 0
+
+
+def createDomains(dict, words):
+    domains = {}
+    for w in words:
+        domains[w.id] = dict[w.length]
+
+    return domains
 
 
 @profile
@@ -351,16 +372,17 @@ def main():
 
     words = horizontalWords + verticalWords
     # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
-    words.sort(key=lambda x: x.intersectionsNumber)
+    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
-    # random.shuffle(words)
+    random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = fillupDictionary(dicPath)
+    domains = createDomains(dict, words)
 
-    # lva, r = backtracking({}, words, dict, 0)
-    lva, r = backtrackingForwardChecking({}, words, dict, 0, crossword)
+    #lva, r = backtracking({}, words, dict, 0)
+    lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
 
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
