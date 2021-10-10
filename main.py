@@ -24,18 +24,18 @@ class Word:
         self.intersections = []
         self.intersectionsNumber = 0
 
-# function to know this word is vertical
-# return the id of word vertical or -1 if not is vertical
-def getIdByCoordVertical(coord, verticalWords):
+# function to get the ID of a vertical word from given coordinates
+# returns -1 if the word is not found
+def getVerticalIdByCoordinate(coord, verticalWords):
     for w in verticalWords:
         if w.pos[1] == coord[1]:
             if w.pos[0] <= coord[0] <= w.pos[0]+w.length:
                 return w.id
     return -1
 
-# function to know this word is horizontal
-# return the id of word horizontal or -1 if not is horizontal
-def getIdByCoordHorizontal(coord, horizontalWords):
+# function to get the ID of a horizontal word from given coordinates
+# returns -1 if the word is not found
+def getHorizontalIdByCoordinate(coord, horizontalWords):
     for w in horizontalWords:
         if w.pos[0] == coord[0]:
             if w.pos[1] <= coord[1] <= w.pos[1]+w.length:
@@ -52,13 +52,13 @@ def lookupIntersections(words, horizontalWords, verticalWords, crossword):
                 if w.pos[0] > 0:
                     if crossword[w.pos[0]-1][y] == 0:
                         index = y - w.pos[1]
-                        intersectedId = getIdByCoordVertical((w.pos[0], y), verticalWords)
+                        intersectedId = getVerticalIdByCoordinate((w.pos[0], y), verticalWords)
                         w.intersections.append(Intersection((w.pos[0], y), index, intersectedId))
                         continue
                 if w.pos[0] < crossword.shape[0]-1:
                     if crossword[w.pos[0]+1][y] == 0:
                         index = y - w.pos[1]
-                        intersectedId = getIdByCoordVertical((w.pos[0],y), verticalWords)
+                        intersectedId = getVerticalIdByCoordinate((w.pos[0], y), verticalWords)
                         w.intersections.append(Intersection((w.pos[0], y), index, intersectedId))
         else:
             xStart = w.pos[0]
@@ -67,13 +67,13 @@ def lookupIntersections(words, horizontalWords, verticalWords, crossword):
                 if w.pos[1] > 0:
                     if crossword[x][w.pos[1]-1] == 0:
                         index = x - w.pos[0]
-                        intersectedId = getIdByCoordHorizontal((x, w.pos[1]), horizontalWords)
+                        intersectedId = getHorizontalIdByCoordinate((x, w.pos[1]), horizontalWords)
                         w.intersections.append(Intersection((x, w.pos[1]), index, intersectedId))
                         continue
                 if w.pos[1] < crossword.shape[1]-1:
                     if crossword[x][w.pos[1]+1] == 0:
                         index =  x - w.pos[0]
-                        intersectedId = getIdByCoordHorizontal((x, w.pos[1]), horizontalWords)
+                        intersectedId = getHorizontalIdByCoordinate((x, w.pos[1]), horizontalWords)
                         w.intersections.append(Intersection((x, w.pos[1]), index, intersectedId))
         w.intersectionsNumber = len(w.intersections)
 
@@ -255,13 +255,14 @@ def backtracking(lva, lvna, d, r):
             if r == 1:
                 return lva, r
 
-    # if not is complete the cossword and word is in LVA
-    # delete from LVA because the word no use for the solution
+    # deleting the found value for current var if
+    # it was  a dead-end on deeper calls of the function
     if r == 0 and var.id in lva:
         lva.pop(var.id)
 
     return lva, 0
 
+@profile
 def main():
     crosswordPath, dicPath = seleccioTest()
 
