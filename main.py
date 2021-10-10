@@ -22,6 +22,7 @@ class Word:
         self.letters = [0] * length
         self.id = idN
         self.intersections = []
+        self.intersectionsNumber = 0
 
 # function to know this word is vertical
 # return the id of word vertical or -1 if not is vertical
@@ -74,6 +75,7 @@ def lookupIntersections(words, horizontalWords, verticalWords, crossword):
                         index =  x - w.pos[0]
                         intersectedId = getIdByCoordHorizontal((x, w.pos[1]), horizontalWords)
                         w.intersections.append(Intersection((x, w.pos[1]), index, intersectedId))
+        w.intersectionsNumber = len(w.intersections)
 
     return words
 
@@ -270,7 +272,8 @@ def main():
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    words.sort(key=lambda x: x.remainingValues)
+    words.sort(key=lambda x: x.intersectionsNumber)
+    #words.sort(key=lambda x: x.length)
     #random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
