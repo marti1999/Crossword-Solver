@@ -39,7 +39,7 @@ class Word:
 
 # selects input test
 def selectTest():
-    crossword = "crossword_A_v2.txt"
+    crossword = "crossword_CB_v2.txt"
     diccionari = "diccionari_test.txt"
 
     return crossword, diccionari
@@ -287,6 +287,7 @@ def insertLva(lva, var, cWord):
 
 
 # main function of the backtracking algorithm
+@profile
 def backtracking(lva, lvna, d, r, crossword):
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
@@ -321,14 +322,18 @@ def updateDomains(var, lvna, cr, d):
     isDomainOk = True
     dTemp = copy.copy(d)
 
+    idDict = {}
+    for i, vna in enumerate(lvna):
+        idDict[vna.id] = i
+
+
+
     for inter in var.intersections:
-        intersectedWordIndex = None
-        for i, vna in enumerate(lvna):
-            if vna.id == inter.intersectedID:
-                intersectedWordIndex = i
-                break
-        if intersectedWordIndex is None:
+        if inter.intersectedID not in idDict:
             continue
+
+
+        intersectedWordIndex = idDict[inter.intersectedID]
 
         wordIntersected = lvna[intersectedWordIndex]
         tempDomain = dTemp[wordIntersected.id]
@@ -366,7 +371,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
     lvna.sort(key=lambda x: x.remainingValues)
 
-    printCrossword(crosswordRestrictions)
+    #printCrossword(crosswordRestrictions)
     var = lvna[0]
 
     domainValues = domain(var, d)
