@@ -39,8 +39,8 @@ class Word:
 
 # selects input test
 def selectTest():
-    crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_CB_v2.txt"
+    crossword = "crossword_A_v2.txt"
+    diccionari = "diccionari_test.txt"
 
     return crossword, diccionari
 
@@ -366,7 +366,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
     lvna.sort(key=lambda x: x.remainingValues)
 
-    # printCrossword(crosswordRestrictions)
+    printCrossword(crosswordRestrictions)
     var = lvna[0]
 
     domainValues = domain(var, d)
@@ -410,17 +410,17 @@ def createDomains(dict, words):
 
 @profile
 def main():
+    realStart = time.time()
+
     crosswordPath, dicPath = selectTest()
 
     crossword = read_crossword(crosswordPath)
 
-    start = time.time()
     horizontalWords = lookupHorizontalVariables(crossword, 0)
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
-    # words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
+    words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
     # random.shuffle(words)
 
@@ -429,17 +429,28 @@ def main():
     dict = fillupDictionary(dicPath)
     domains, words = createDomains(dict, words)
 
+
+    BTstart = time.time()
     # lva, r = backtracking({}, words, domains, 0, crossword)
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
+    BTend = time.time()
+    tempsBT = BTend - BTstart
 
+
+    FCstart = time.time()
     lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
+    FCend = time.time()
+    tempsFC = FCend - FCstart
 
-    end = time.time()
-    temps = end - start
-    print("temps: %d", temps)
+    realEnd = time.time()
+    temps = realEnd - realStart
+
+    print("Backtracking: ", tempsBT, "seconds")
+    print("Forward Checking: ", tempsFC, "seconds")
+    print("Total elapsed time: ", temps, "seconds")
 
 
 if __name__ == '__main__':
