@@ -9,6 +9,10 @@ import time
 from line_profiler_pycharm import profile
 
 
+###########
+### CLASSES
+###########
+
 class Intersection:
     def __init__(self, coord, index, intersectedID):
         self.coord = coord
@@ -26,6 +30,32 @@ class Word:
         self.id = idN
         self.intersections = []
         self.intersectionsNumber = 0
+
+
+#################
+### FETCHING DATA
+#################
+
+
+# selects input test
+def selectTest():
+    crossword = "crossword_CB_v2.txt"
+    diccionari = "diccionari_CB_v2.txt"
+
+    return crossword, diccionari
+
+
+# Reading crossword and turning it into a nparray
+def read_crossword(crossword):
+    table = []
+    for line in open(crossword):
+        noTabs = list(line.split())
+        for i, v in enumerate(noTabs):
+            if v == "#":
+                noTabs[i] = "35"
+        table.append(noTabs)
+    npTable = np.array(table, dtype=np.uint8)
+    return npTable
 
 
 # function to get the ID of a vertical word from given coordinates
@@ -48,6 +78,65 @@ def getHorizontalIdByCoordinate(coord, horizontalWords):
     return -1
 
 
+# Looks for all horizontal words to fill in the crossword
+def lookupHorizontalVariables(npTable, idN):
+    foundWords = []
+
+    for x in range(0, npTable.shape[0]):
+        len = 0
+        for y in range(1, npTable.shape[1]):
+            if len == 0:
+                if npTable[x][y - 1] != 35 and npTable[x][y] != 35:
+                    len = 2
+                    continue
+            if len > 1:
+                if npTable[x][y] != 35:
+                    len += 1
+                    continue
+                else:
+                    pos = (x, y - len)
+                    foundWords.append(Word(pos, 1, len, len, idN))
+                    idN += 1
+                    len = 0
+
+        if len > 1:
+            pos = (x, npTable.shape[1] - len)
+            word = Word(pos, 1, len, len, idN)
+            idN += 1
+            foundWords.append(word)
+    return foundWords
+
+
+# Looks for all vertical words to fill in the crossword
+def lookupVerticalVariables(npTable, idN):
+    foundWords = []
+    for y in range(0, npTable.shape[1]):
+        len = 0
+        for x in range(1, npTable.shape[0]):
+            if len == 0:
+                if npTable[x - 1][y] != 35 and npTable[x][y] != 35:
+                    len = 2
+                    continue
+
+            if len > 1:
+                if npTable[x][y] != 35:
+                    len += 1
+                    continue
+                else:
+                    pos = (x - len, y)
+                    foundWords.append(Word(pos, 0, len, len, idN))
+                    idN += 1
+                    len = 0
+        if len > 1:
+            pos = (npTable.shape[0] - len, y)
+            word = Word(pos, 0, len, len, idN)
+            idN += 1
+            foundWords.append(word)
+    return foundWords
+
+
+# From a set of given words and the board, it finds all the intersections
+# and stores them in an attribute in its corresponding word
 def lookupIntersections(words, horizontalWords, verticalWords, crossword):
     for w in words:
         if w.horizontal == 1:
@@ -85,117 +174,7 @@ def lookupIntersections(words, horizontalWords, verticalWords, crossword):
     return words
 
 
-def read_crossword(crossword):
-    table = []
-    for line in open(crossword):
-        noTabs = list(line.split())
-        for i, v in enumerate(noTabs):
-            if v == "#":
-                noTabs[i] = "35"
-        table.append(noTabs)
-    npTable = np.array(table, dtype=np.uint8)
-    return npTable
-
-
-def storeLvaToCrossword(lva, crossword):
-    for word in lva.values():
-        index = 0
-        if word.horizontal == 1:
-            x = word.pos[0]
-            for y in range(word.pos[1], word.pos[1] + word.length):
-                crossword[x][y] = word.letters[index]
-                index += 1
-        else:
-            y = word.pos[1]
-            for x in range(word.pos[0], word.pos[0] + word.length):
-                crossword[x][y] = word.letters[index]
-                index += 1
-    return crossword
-
-
-def storeWordToCrossword(word, crossword):
-    index = 0
-    if word.horizontal == 1:
-        x = word.pos[0]
-        for y in range(word.pos[1], word.pos[1] + word.length):
-            crossword[x][y] = word.letters[index]
-            index += 1
-    else:
-        y = word.pos[1]
-        for x in range(word.pos[0], word.pos[0] + word.length):
-            crossword[x][y] = word.letters[index]
-            index += 1
-    return crossword
-
-
-def printCrossword(crossword):
-    print('\n'.join([''.join(['{:4}'.format(chr(item))
-                              for item in row]) for row in crossword]))
-    print("\n\n")
-
-
-def lookupHorizontalVariables(npTable, idN):
-    foundWords = []
-
-    for x in range(0, npTable.shape[0]):
-        len = 0
-        for y in range(1, npTable.shape[1]):
-            if len == 0:
-                if npTable[x][y - 1] != 35 and npTable[x][y] != 35:
-                    len = 2
-                    continue
-            if len > 1:
-                if npTable[x][y] != 35:
-                    len += 1
-                    continue
-                else:
-                    pos = (x, y - len)
-                    foundWords.append(Word(pos, 1, len, len, idN))
-                    idN += 1
-                    len = 0
-
-        if len > 1:
-            pos = (x, npTable.shape[1] - len)
-            word = Word(pos, 1, len, len, idN)
-            idN += 1
-            foundWords.append(word)
-    return foundWords
-
-
-def lookupVerticalVariables(npTable, idN):
-    foundWords = []
-    for y in range(0, npTable.shape[1]):
-        len = 0
-        for x in range(1, npTable.shape[0]):
-            if len == 0:
-                if npTable[x - 1][y] != 35 and npTable[x][y] != 35:
-                    len = 2
-                    continue
-
-            if len > 1:
-                if npTable[x][y] != 35:
-                    len += 1
-                    continue
-                else:
-                    pos = (x - len, y)
-                    foundWords.append(Word(pos, 0, len, len, idN))
-                    idN += 1
-                    len = 0
-        if len > 1:
-            pos = (npTable.shape[0] - len, y)
-            word = Word(pos, 0, len, len, idN)
-            idN += 1
-            foundWords.append(word)
-    return foundWords
-
-
-def seleccioTest():
-    crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_CB_v2.txt"
-
-    return crossword, diccionari
-
-
+# Fetching words from the given file
 def fillupDictionary(dictPath):
     # Dictionary with all the words.
     # Each key is the size of the word.
@@ -223,10 +202,60 @@ def fillupDictionary(dictPath):
     return dict
 
 
+# Returns the domain of a given variable
 def domain(var, d):
     return d[var.id]
 
 
+######################################
+### WRITING VARIABLES AND SHOWING DATA
+######################################
+
+# Write lva values to crossword in a readable format
+def storeLvaToCrossword(lva, crossword):
+    for word in lva.values():
+        index = 0
+        if word.horizontal == 1:
+            x = word.pos[0]
+            for y in range(word.pos[1], word.pos[1] + word.length):
+                crossword[x][y] = word.letters[index]
+                index += 1
+        else:
+            y = word.pos[1]
+            for x in range(word.pos[0], word.pos[0] + word.length):
+                crossword[x][y] = word.letters[index]
+                index += 1
+    return crossword
+
+
+# Writes a single word to the crossword
+def storeWordToCrossword(word, crossword):
+    index = 0
+    if word.horizontal == 1:
+        x = word.pos[0]
+        for y in range(word.pos[1], word.pos[1] + word.length):
+            crossword[x][y] = word.letters[index]
+            index += 1
+    else:
+        y = word.pos[1]
+        for x in range(word.pos[0], word.pos[0] + word.length):
+            crossword[x][y] = word.letters[index]
+            index += 1
+    return crossword
+
+
+# Formatting and printing the crossword
+def printCrossword(crossword):
+    print('\n'.join([''.join(['{:4}'.format(chr(item))
+                              for item in row]) for row in crossword]))
+    print("\n\n")
+
+
+#################################
+### MAIN FUNCTIONS OF THE PROGRAM
+#################################
+
+# From a given value, checks all restrictions from other variables
 def restrictionsOK(var, cWord, lva, r):
     intersections = var.intersections
 
@@ -250,17 +279,17 @@ def restrictionsOK(var, cWord, lva, r):
     return True
 
 
+# writing to LVA list a new variable with a (so far) correct value
 def insertLva(lva, var, cWord):
     var.letters = cWord.tolist()
     lva[var.id] = var
     return lva
 
 
+# main function of the backtracking algorithm
 def backtracking(lva, lvna, d, r, crossword):
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
-
-
 
     if not lvna:
         return lva, 1
@@ -285,6 +314,8 @@ def backtracking(lva, lvna, d, r, crossword):
     return lva, 0
 
 
+# Used in forward checking, it updates all the domains that
+# variables restricted by the current one will have
 @profile
 def updateDomains(var, lvna, cr, d):
     isDomainOk = True
@@ -310,7 +341,6 @@ def updateDomains(var, lvna, cr, d):
             if inte.intersectedID == var.id:
                 indexInter = inte.index
 
-
         existingValue = cr[x][y]
         if existingValue > 64:  # is a letter
             subIndex = np.where(tempDomain[:, indexInter] == existingValue)
@@ -318,7 +348,6 @@ def updateDomains(var, lvna, cr, d):
             if tempDomain.shape[0] == 0:
                 isDomainOk = False
                 break
-
 
         dTemp[wordIntersected.id] = tempDomain
         lvna[intersectedWordIndex].remainingValues = tempDomain.shape[0]
@@ -329,6 +358,7 @@ def updateDomains(var, lvna, cr, d):
         return dTemp
 
 
+# main function for the backtracking forward checking algorithm
 @profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
@@ -336,7 +366,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
     lvna.sort(key=lambda x: x.remainingValues)
 
-    printCrossword(crosswordRestrictions)
+    # printCrossword(crosswordRestrictions)
     var = lvna[0]
 
     domainValues = domain(var, d)
@@ -368,6 +398,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     return lva, 0
 
 
+# Creating a domain for each variable
 def createDomains(dict, words):
     domains = {}
     for w in words:
@@ -379,7 +410,7 @@ def createDomains(dict, words):
 
 @profile
 def main():
-    crosswordPath, dicPath = seleccioTest()
+    crosswordPath, dicPath = selectTest()
 
     crossword = read_crossword(crosswordPath)
 
@@ -389,9 +420,9 @@ def main():
 
     words = horizontalWords + verticalWords
     # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
-    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
+    # words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
-    #random.shuffle(words)
+    # random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
