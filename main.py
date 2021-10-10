@@ -5,7 +5,7 @@ import sys
 import random
 import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
-from line_profiler_pycharm import profile
+# from line_profiler_pycharm import profile
 
 class Intersection:
     def __init__(self, coord, index, intersectedID):
