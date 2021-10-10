@@ -1,4 +1,5 @@
 import copy
+import json
 import math
 import numpy as np
 import sys
@@ -190,7 +191,7 @@ def lookupVerticalVariables(npTable, idN):
 
 def seleccioTest():
     crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_A.txt"
+    diccionari = "diccionari_CB_v2.txt"
 
     return crossword, diccionari
 
@@ -256,7 +257,6 @@ def insertLva(lva, var, cWord):
 
 
 def backtracking(lva, lvna, d, r, crossword):
-
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
 
@@ -288,30 +288,53 @@ def updateDomains(var, lvna, cr, d):
     isDomainOk = True
     dTemp = copy.deepcopy(d)
 
+    if var.id == 4:
+        print("aquí")
+
     for inter in var.intersections:
         intersectedWordIndex = None
-        for intersectedWordIndex, vna in enumerate(lvna):
+        for i, vna in enumerate(lvna):
             if vna.id == inter.intersectedID:
+                intersectedWordIndex = i
                 break
         if intersectedWordIndex is None:
             continue
 
         wordIntersected = lvna[intersectedWordIndex]
-        tempDomain = copy.deepcopy(dTemp[wordIntersected.id])
-        for wii in wordIntersected.intersections:
-            existingValue = cr[wii.coord[0]][wii.coord[1]]
-            if existingValue > 64: #is a letter
-                x = np.where(tempDomain[:, wii.index] == existingValue)
-                tempDomain = tempDomain[x]
-                if tempDomain.shape[0] == 0:
-                    isDomainOk = False
-                    break
-        if not isDomainOk:
-            break
+        tempDomain = dTemp[wordIntersected.id]
+
+        x = inter.coord[0]
+        y = inter.coord[1]
+
+        indexInter = 0
+        for inte in wordIntersected.intersections:
+            if inte.intersectedID == var.id:
+                indexInter = inte.index
+
+
+        existingValue = cr[x][y]
+        if existingValue > 64:  # is a letter
+            subIndex = np.where(tempDomain[:, indexInter] == existingValue)
+            tempDomain = tempDomain[subIndex]
+            if tempDomain.shape[0] == 0:
+                isDomainOk = False
+                break
+
+        # for wii in wordIntersected.intersections:
+        #     existingValue = cr[wii.coord[0]][wii.coord[1]]
+        #     if existingValue > 64:  # is a letter
+        #         x = np.where(tempDomain[:, wii.index] == existingValue)
+        #         tempDomain = tempDomain[x]
+        #         if tempDomain.shape[0] == 0:
+        #             isDomainOk = False
+        #             break
+        # if not isDomainOk:
+        #     break
+
         dTemp[wordIntersected.id] = tempDomain
 
     if not isDomainOk:
-        return False
+        return None
     else:
         return dTemp
 
@@ -335,7 +358,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
         updateDomainsResult = updateDomains(var, lvna, crosswordRestrictions, d)
 
-        if not updateDomainsResult:
+        if updateDomainsResult is None:
             var.letters = [0] * var.length
             crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
             continue
@@ -376,9 +399,9 @@ def main():
 
     words = horizontalWords + verticalWords
     # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
-    words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
+    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
-    #random.shuffle(words)
+    random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
@@ -388,7 +411,6 @@ def main():
     # lva, r = backtracking({}, words, domains, 0, crossword)
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
-
 
     lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
     crossword = storeLvaToCrossword(lva, crossword)
