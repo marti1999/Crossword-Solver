@@ -190,7 +190,7 @@ def lookupVerticalVariables(npTable, idN):
 
 def seleccioTest():
     crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_CB_v2.txt"
+    diccionari = "diccionari_A.txt"
 
     return crossword, diccionari
 
@@ -250,12 +250,16 @@ def restrictionsOK(var, cWord, lva, r):
 
 
 def insertLva(lva, var, cWord):
-    # var.letters = cWord.tolist()
+    var.letters = cWord.tolist()
     lva[var.id] = var
     return lva
 
 
-def backtracking(lva, lvna, d, r):
+def backtracking(lva, lvna, d, r, crossword):
+
+    crossword = storeLvaToCrossword(lva, crossword)
+    printCrossword(crossword)
+
     if not lvna:
         return lva, 1
 
@@ -267,7 +271,7 @@ def backtracking(lva, lvna, d, r):
         if restrictionsOK(var, cWord, lva, 0):
 
             lva = insertLva(lva, var, cWord)
-            lva, r = backtracking(lva, lvna[1:], d, r)
+            lva, r = backtracking(lva, lvna[1:], d, r, crossword)
             if r == 1:
                 return lva, r
 
@@ -372,18 +376,21 @@ def main():
 
     words = horizontalWords + verticalWords
     # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
-    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
+    words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
-    random.shuffle(words)
+    #random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = fillupDictionary(dicPath)
     domains = createDomains(dict, words)
 
-    #lva, r = backtracking({}, words, dict, 0)
-    lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
+    # lva, r = backtracking({}, words, domains, 0, crossword)
+    # crossword = storeLvaToCrossword(lva, crossword)
+    # printCrossword(crossword)
 
+
+    lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
 
