@@ -109,15 +109,10 @@ def storeLvaToCrossword(lva, crossword):
 
 
 def printCrossword(crossword):
-    # crossword = np.where(crossword[:] ==1, '#', crossword)
-
-    #TODO descomentar i deixar mostrant les lletres i no els números
 
     print('\n'.join([''.join(['{:4}'.format(chr(item))
                               for item in row]) for row in crossword]))
-    # print('\n'.join([''.join(['{:4}'.format(item)
-    #                           for item in row]) for row in crossword]))
-    print("\n\n\n")
+    print("\n\n")
 
 
 def lookupHorizontalVariables(npTable, idN):
@@ -273,6 +268,7 @@ def main():
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
+    #TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
     words.sort(key=lambda x: x.intersectionsNumber)
     #words.sort(key=lambda x: x.length)
     #random.shuffle(words)
