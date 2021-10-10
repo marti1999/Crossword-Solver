@@ -234,6 +234,9 @@ def insertLva(lva, var, cWord):
     lva[var.id] = var
     return lva
 
+#-----------------
+# Backtraking
+#------------------
 def backtracking(lva, lvna, d, r):
 
     if not lvna:
@@ -257,7 +260,50 @@ def backtracking(lva, lvna, d, r):
 
     return lva, 0
 
-@profile
+#-----------------
+# Backtraking + ForwardChecking
+#------------------
+
+def domainUpdate(var, cWord, d):
+
+    for intersection in var.intersections:
+        if cWord in d[var.length]:
+            if cWord[intersection.index] == var.letters[intersection.index] or var.letters[intersection.index] == 0:
+                for key in d:
+                    for number,words in enumerate(d[key]):
+                        if words[intersection.index] != var.letters[intersection.index]:
+                            return d, True
+                        d.pop(var.length, words)
+                if d[key].any():
+                    return d, False
+
+
+
+def backtrackingForwardChecking(lva, lvna, d, r):
+
+    if not lvna:
+        return lva, 1
+
+    var = lvna[0]
+
+    domainValues = domain(var, d)
+    for cWord in domainValues:
+
+        if restrictionsOK(var, cWord, lva, 0) :
+            d, modify = domainUpdate(var, cWord, d)
+            if modify == True:
+                lva = insertLva(lva, var, cWord)
+                lva, r = backtracking(lva, lvna[1:], d, r)
+                if r == 1:
+                    return lva, r
+
+    # deleting the found value for current var if
+    # it was  a dead-end on deeper calls of the function
+    if r == 0 and var.id in lva:
+        lva.pop(var.id)
+
+    return lva, 0
+
 def main():
     crosswordPath, dicPath = seleccioTest()
 
@@ -277,7 +323,7 @@ def main():
 
     dict = classificarDiccionari(dicPath)
 
-    lva, r = backtracking({}, words, dict, 0)
+    lva, r = backtrackingForwardChecking({}, words, dict, 0)
 
     crossword = storeLvaToCrossword(lva, crossword)
     printCrossword(crossword)
