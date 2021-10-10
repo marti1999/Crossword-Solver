@@ -257,8 +257,10 @@ def insertLva(lva, var, cWord):
 
 
 def backtracking(lva, lvna, d, r, crossword):
-    crossword = storeLvaToCrossword(lva, crossword)
-    printCrossword(crossword)
+    # crossword = storeLvaToCrossword(lva, crossword)
+    # printCrossword(crossword)
+
+
 
     if not lvna:
         return lva, 1
@@ -286,10 +288,7 @@ def backtracking(lva, lvna, d, r, crossword):
 @profile
 def updateDomains(var, lvna, cr, d):
     isDomainOk = True
-    dTemp = copy.deepcopy(d)
-
-    if var.id == 4:
-        print("aquí")
+    dTemp = copy.copy(d)
 
     for inter in var.intersections:
         intersectedWordIndex = None
@@ -320,18 +319,9 @@ def updateDomains(var, lvna, cr, d):
                 isDomainOk = False
                 break
 
-        # for wii in wordIntersected.intersections:
-        #     existingValue = cr[wii.coord[0]][wii.coord[1]]
-        #     if existingValue > 64:  # is a letter
-        #         x = np.where(tempDomain[:, wii.index] == existingValue)
-        #         tempDomain = tempDomain[x]
-        #         if tempDomain.shape[0] == 0:
-        #             isDomainOk = False
-        #             break
-        # if not isDomainOk:
-        #     break
 
         dTemp[wordIntersected.id] = tempDomain
+        lvna[intersectedWordIndex].remainingValues = tempDomain.shape[0]
 
     if not isDomainOk:
         return None
@@ -343,6 +333,8 @@ def updateDomains(var, lvna, cr, d):
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
         return lva, 1
+
+    lvna.sort(key=lambda x: x.remainingValues)
 
     printCrossword(crosswordRestrictions)
     var = lvna[0]
@@ -363,9 +355,6 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
             crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
             continue
 
-        # if not updateDomains(var, lvna, crosswordRestrictions, d):
-        #     continue
-
         lva = insertLva(lva, var, cWord)
         lva, r = backtrackingForwardChecking(lva, lvna[1:], updateDomainsResult, r, crosswordRestrictions)
         if r == 1:
@@ -383,8 +372,9 @@ def createDomains(dict, words):
     domains = {}
     for w in words:
         domains[w.id] = dict[w.length]
+        w.remainingValues = dict[w.length].shape[0]
 
-    return domains
+    return domains, words
 
 
 @profile
@@ -401,12 +391,12 @@ def main():
     # TODO aquesta ordenació s'ha de fer per cada nova crida del backtracking
     #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
-    random.shuffle(words)
+    #random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = fillupDictionary(dicPath)
-    domains = createDomains(dict, words)
+    domains, words = createDomains(dict, words)
 
     # lva, r = backtracking({}, words, domains, 0, crossword)
     # crossword = storeLvaToCrossword(lva, crossword)
