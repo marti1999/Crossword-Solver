@@ -39,8 +39,8 @@ class Word:
 
 # selects input test
 def selectTest():
-    crossword = "crossword_CB_v2.txt"
-    diccionari = "diccionari_test.txt"
+    crossword = "crossword_A_v2.txt"
+    diccionari = "diccionari_A.txt"
 
     return crossword, diccionari
 
@@ -381,13 +381,15 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
             continue
 
         var.letters = cWord.tolist()
+        crosswordRestrictionsBackup = copy.copy(crosswordRestrictions)
         crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
 
         updateDomainsResult = updateDomains(var, lvna, crosswordRestrictions, d)
 
         if updateDomainsResult is None:
             var.letters = [0] * var.length
-            crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
+            #crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
+            crosswordRestrictions = crosswordRestrictionsBackup
             continue
 
         lva = insertLva(lva, var, cWord)
