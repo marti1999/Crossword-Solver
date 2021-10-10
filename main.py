@@ -177,7 +177,7 @@ def seleccioTest():
     return crossword, diccionari
 
 
-def classificarDiccionari(dictPath):
+def classifyDictionari(dictPath):
     # Dictionary with all the words.
     # Each key is the size of the word.
     # Each value is a 2D numpy array. The first dimension is the word,
@@ -242,6 +242,7 @@ def backtracking(lva, lvna, d, r):
     if not lvna:
         return lva, 1
 
+    lvna.sort(key=lambda x: x.remainingValues)
     var = lvna[0]
 
     domainValues = domain(var, d)
@@ -264,7 +265,7 @@ def backtracking(lva, lvna, d, r):
 # Backtraking + ForwardChecking
 #------------------
 
-def domainUpdate(var, cWord, d):
+def domainUpdate(var, lvna, cWord, d):
 
     for intersection in var.intersections:
         if cWord in d[var.length]:
@@ -274,12 +275,11 @@ def domainUpdate(var, cWord, d):
                         if set(words) != set(cWord):
                             if words[intersection.index] != cWord[intersection.index]:
                                 #no funciona
-                                d[key].index(words)
-                                np.where(d[key], words)
-                                d[key].remove(words)
+                                lista = d[key]
+                                np.delete(d[key],number)
+                    if d[key].any():
+                        return d, False
 
-                if d[key].any():
-                    return d, False
     return d, True
 
 
@@ -287,14 +287,14 @@ def backtrackingForwardChecking(lva, lvna, d, r):
 
     if not lvna:
         return lva, 1
-
+    lvna.sort(key=lambda x: x.remainingValues)
     var = lvna[0]
 
     domainValues = domain(var, d)
     for cWord in domainValues:
 
         if restrictionsOK(var, cWord, lva, 0) :
-            d, modify = domainUpdate(var, cWord, d)
+            d, modify = domainUpdate(var, lvna, cWord, d)
             if modify == True:
                 lva = insertLva(lva, var, cWord)
                 lva, r = backtrackingForwardChecking(lva, lvna[1:], d, r)
@@ -325,7 +325,7 @@ def main():
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
-    dict = classificarDiccionari(dicPath)
+    dict = classifyDictionari(dicPath)
 
     lva, r = backtrackingForwardChecking({}, words, dict, 0)
 
