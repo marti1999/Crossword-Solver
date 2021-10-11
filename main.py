@@ -39,7 +39,7 @@ class Word:
 
 # selects input test
 def selectTest():
-    crossword = "crossword_A_v2.txt"
+    crossword = "crossword_test.txt"
     diccionari = "diccionari_A.txt"
 
     return crossword, diccionari
