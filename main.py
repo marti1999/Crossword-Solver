@@ -38,11 +38,23 @@ class Word:
 
 
 # selects input test
-def selectTest():
-    crossword = "crossword_test.txt"
-    diccionari = "diccionari_A.txt"
+def selectTest(crosswordName):
+    # crossword = "crossword_CB_v2.txt"
+    # diccionari = "diccionari_CB_v2.txt"
 
-    return crossword, diccionari
+    # crossword = "crossword_7.txt"
+    diccionari = "diccionari_A.txt"
+    #
+    # crossword = "crossword_8.txt"
+    # diccionari = "diccionari_A.txt"
+    #
+    # crossword = "crossword_9.txt"
+    # diccionari = "diccionari_A.txt"
+    #
+    # crossword = "crossword_10.txt"
+    # diccionari = "diccionari_A.txt"
+
+    return crosswordName, diccionari
 
 
 # Reading crossword and turning it into a nparray
@@ -326,12 +338,9 @@ def updateDomains(var, lvna, cr, d):
     for i, vna in enumerate(lvna):
         idDict[vna.id] = i
 
-
-
     for inter in var.intersections:
         if inter.intersectedID not in idDict:
             continue
-
 
         intersectedWordIndex = idDict[inter.intersectedID]
 
@@ -416,10 +425,10 @@ def createDomains(dict, words):
 
 
 @profile
-def main():
+def main(crosswordName):
     realStart = time.time()
 
-    crosswordPath, dicPath = selectTest()
+    crosswordPath, dicPath = selectTest(crosswordName)
 
     crossword = read_crossword(crosswordPath)
 
@@ -427,7 +436,7 @@ def main():
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
+    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
     # words.sort(key=lambda x: x.length)
     # random.shuffle(words)
 
@@ -461,4 +470,13 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # print("CROSSWORD 7")
+    # main("crossword_7.txt")
+    # print("CROSSWORD 8")
+    # main("crossword_8.txt")
+    # print("CROSSWORD 9")
+    # main("crossword_9.txt")
+    # print("CROSSWORD 10")
+    # main("crossword_10.txt")
+    print("CROSSWORD 12")
+    main("crossword_12.txt")
