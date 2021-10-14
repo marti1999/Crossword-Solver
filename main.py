@@ -1,12 +1,8 @@
 import copy
-import json
-import math
 import numpy as np
-import sys
-import random
 import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
-from line_profiler_pycharm import profile
+#from line_profiler_pycharm import profile
 
 
 ###########
@@ -38,12 +34,12 @@ class Word:
 
 
 # selects input test
-def selectTest(crosswordName):
+def selectTest(crosswordName, dicName):
     # crossword = "crossword_CB_v2.txt"
     # diccionari = "diccionari_CB_v2.txt"
 
     # crossword = "crossword_7.txt"
-    diccionari = "diccionari_A.txt"
+    # diccionari = "diccionari_A.txt"
     #
     # crossword = "crossword_8.txt"
     # diccionari = "diccionari_A.txt"
@@ -54,7 +50,7 @@ def selectTest(crosswordName):
     # crossword = "crossword_10.txt"
     # diccionari = "diccionari_A.txt"
 
-    return crosswordName, diccionari
+    return crosswordName, dicName
 
 
 # Reading crossword and turning it into a nparray
@@ -299,7 +295,7 @@ def insertLva(lva, var, cWord):
 
 
 # main function of the backtracking algorithm
-@profile
+#@profile
 def backtracking(lva, lvna, d, r, crossword):
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
@@ -329,7 +325,7 @@ def backtracking(lva, lvna, d, r, crossword):
 
 # Used in forward checking, it updates all the domains that
 # variables restricted by the current one will have
-@profile
+#@profile
 def updateDomains(var, lvna, cr, d):
     isDomainOk = True
     dTemp = copy.copy(d)
@@ -373,7 +369,7 @@ def updateDomains(var, lvna, cr, d):
 
 
 # main function for the backtracking forward checking algorithm
-@profile
+#@profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
         return lva, 1
@@ -424,11 +420,11 @@ def createDomains(dict, words):
     return domains, words
 
 
-@profile
-def main(crosswordName):
+#@profile
+def main(crosswordName, dicName):
     realStart = time.time()
 
-    crosswordPath, dicPath = selectTest(crosswordName)
+    crosswordPath, dicPath = selectTest(crosswordName, dicName)
 
     crossword = read_crossword(crosswordPath)
 
@@ -437,7 +433,7 @@ def main(crosswordName):
 
     words = horizontalWords + verticalWords
     #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
-    # words.sort(key=lambda x: x.length)
+    #words.sort(key=lambda x: x.length)
     # random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
@@ -470,13 +466,13 @@ def main(crosswordName):
 
 
 if __name__ == '__main__':
-    # print("CROSSWORD 7")
-    # main("crossword_7.txt")
-    # print("CROSSWORD 8")
-    # main("crossword_8.txt")
-    # print("CROSSWORD 9")
-    # main("crossword_9.txt")
-    # print("CROSSWORD 10")
-    # main("crossword_10.txt")
+    print("CROSSWORD 7")
+    main("crossword_7.txt", "diccionari_A.txt")
+    print("CROSSWORD 8")
+    main("crossword_8.txt", "diccionari_A.txt")
+    print("CROSSWORD 9")
+    main("crossword_9.txt", "diccionari_A.txt")
+    print("CROSSWORD 10")
+    main("crossword_10.txt", "diccionari_A.txt")
     print("CROSSWORD 12")
-    main("crossword_12.txt")
+    main("crossword_12.txt", "diccionari_A.txt")
