@@ -264,37 +264,14 @@ def printCrossword(crossword):
 ### MAIN FUNCTIONS OF THE PROGRAM
 #################################
 
-# From a given value, checks all restrictions from other variables
-def restrictionsOK(var, cWord, lva, r, lvna):
-    intersections = var.intersections
+# Creating a domain for each variable
+def createDomains(dict, words):
+    domains = {}
+    for w in words:
+        domains[w.id] = dict[w.length]
+        w.remainingValues = dict[w.length].shape[0]
 
-    idDict = {}
-    for i, vna in enumerate(lvna):
-        idDict[vna.id] = i
-
-    for i in intersections:
-        intersectedWord = None
-        if i.intersectedID not in lva:
-            intersectedWord = lvna[idDict[i.intersectedID]]
-            if intersectedWord.empty:
-                continue
-
-        if intersectedWord is None:
-            intersectedWord = lva[i.intersectedID]
-
-        candidateValue = cWord[i.index]
-
-        if intersectedWord.horizontal == 1:
-            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
-            intersectedValue = intersectedWord.letters[intersectionIndex]
-        else:
-            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
-            intersectedValue = intersectedWord.letters[intersectionIndex]
-
-        if intersectedValue != candidateValue and intersectedValue != 0:
-            return False
-
-    return True
+    return domains, words
 
 
 # writing to LVA list a new variable with a (so far) correct value
@@ -331,6 +308,39 @@ def backtracking(lva, lvna, d, r, crossword):
         lva.pop(var.id)
 
     return lva, 0
+
+
+# From a given value, checks all restrictions from other variables
+def restrictionsOK(var, cWord, lva, r, lvna):
+    intersections = var.intersections
+
+    idDict = {}
+    for i, vna in enumerate(lvna):
+        idDict[vna.id] = i
+
+    for i in intersections:
+        intersectedWord = None
+        if i.intersectedID not in lva:
+            intersectedWord = lvna[idDict[i.intersectedID]]
+            if intersectedWord.empty:
+                continue
+
+        if intersectedWord is None:
+            intersectedWord = lva[i.intersectedID]
+
+        candidateValue = cWord[i.index]
+
+        if intersectedWord.horizontal == 1:
+            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+        else:
+            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+
+        if intersectedValue != candidateValue and intersectedValue != 0:
+            return False
+
+    return True
 
 
 # Used in forward checking, it updates all the domains that
@@ -405,7 +415,6 @@ def updateLvnaIntersections(var, lvna):
     return lvna
 
 
-
 # main function for the backtracking forward checking algorithm
 #@profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
@@ -417,6 +426,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
     printCrossword(crosswordRestrictions)
     var = lvna[0]
+    varBackup = copy.copy(var)
 
     if var.pos[0] == 2 and var.pos[1] == 0:
         print("aquí")
@@ -427,7 +437,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
         if not restrictionsOK(var, cWord, lva, 0, lvna):
             continue
 
-        varBackup = copy.copy(var)
+        #varBackup = copy.copy(var)
         var.letters = cWord.tolist()
         var.empty = False
         crosswordRestrictionsBackup = copy.copy(crosswordRestrictions)
@@ -443,27 +453,26 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
         lvna = updateLvnaIntersections(var, lvna)
 
         lva = insertLva(lva, var, cWord)
+
+
+        nextVarBackup = None
+        if len(lvna) > 1:
+            nextVarBackup = copy.copy(lvna[1])
+        crosswordRestrictionsBackup = copy.copy(crosswordRestrictions)
         lva, r = backtrackingForwardChecking(lva, lvna[1:], updateDomainsResult, r, crosswordRestrictions)
         if r == 1:
             return lva, r
+        else:
+            crosswordRestrictions = crosswordRestrictionsBackup
+            lvna[1] = nextVarBackup
 
     # deleting the found value for current var if
     # it was  a dead-end on deeper calls of the function
     if r == 0 and var.id in lva:
         lva.pop(var.id)
-    lvna = lvnaBackup
+    #lvna[0] = varBackup
 
     return lva, 0
-
-
-# Creating a domain for each variable
-def createDomains(dict, words):
-    domains = {}
-    for w in words:
-        domains[w.id] = dict[w.length]
-        w.remainingValues = dict[w.length].shape[0]
-
-    return domains, words
 
 
 #@profile
