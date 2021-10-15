@@ -1,6 +1,10 @@
 import copy
-import numpy as np
+import random
 import time
+
+import numpy as np
+
+
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
 #from line_profiler_pycharm import profile
 
@@ -26,6 +30,7 @@ class Word:
         self.id = idN
         self.intersections = []
         self.intersectionsNumber = 0
+        self.empty = True
 
 
 #################
@@ -263,11 +268,13 @@ def printCrossword(crossword):
 ### MAIN FUNCTIONS OF THE PROGRAM
 #################################
 
+<<<<<<< HEAD
 # From a given value, checks all restrictions from other variables
 def restrictionsOK(var, cWord, lva, r):
     intersections = var.intersections
 
     for i in intersections:
+
         if i.intersectedID not in lva:
             continue
 
@@ -283,8 +290,16 @@ def restrictionsOK(var, cWord, lva, r):
 
         if intersectedValue != candidateValue:
             return False
+=======
+# Creating a domain for each variable
+def createDomains(dict, words):
+    domains = {}
+    for w in words:
+        domains[w.id] = dict[w.length]
+        w.remainingValues = dict[w.length].shape[0]
+>>>>>>> f0bc0e3318cb4b0eb73e1b67e9cae89f5df62cbf
 
-    return True
+    return domains, words
 
 
 # writing to LVA list a new variable with a (so far) correct value
@@ -323,6 +338,39 @@ def backtracking(lva, lvna, d, r, crossword):
     return lva, 0
 
 
+# From a given value, checks all restrictions from other variables
+def restrictionsOK(var, cWord, lva, r, lvna):
+    intersections = var.intersections
+
+    idDict = {}
+    for i, vna in enumerate(lvna):
+        idDict[vna.id] = i
+
+    for i in intersections:
+        intersectedWord = None
+        if i.intersectedID not in lva:
+            intersectedWord = lvna[idDict[i.intersectedID]]
+            if intersectedWord.empty:
+                continue
+
+        if intersectedWord is None:
+            intersectedWord = lva[i.intersectedID]
+
+        candidateValue = cWord[i.index]
+
+        if intersectedWord.horizontal == 1:
+            intersectionIndex = i.coord[1] - intersectedWord.pos[1]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+        else:
+            intersectionIndex = i.coord[0] - intersectedWord.pos[0]
+            intersectedValue = intersectedWord.letters[intersectionIndex]
+
+        if intersectedValue != candidateValue and intersectedValue != 0:
+            return False
+
+    return True
+
+
 # Used in forward checking, it updates all the domains that
 # variables restricted by the current one will have
 #@profile
@@ -339,8 +387,8 @@ def updateDomains(var, lvna, cr, d):
             continue
 
         intersectedWordIndex = idDict[inter.intersectedID]
-
         wordIntersected = lvna[intersectedWordIndex]
+
         tempDomain = dTemp[wordIntersected.id]
 
         x = inter.coord[0]
@@ -368,6 +416,33 @@ def updateDomains(var, lvna, cr, d):
         return dTemp
 
 
+def updateLvnaIntersections(var, lvna):
+
+    idDict = {}
+
+    for i, vna in enumerate(lvna):
+        idDict[vna.id] = i
+
+    for inter in var.intersections:
+        if inter.intersectedID not in idDict:
+            continue
+
+        intersectedWordIndex = idDict[inter.intersectedID]
+
+        wordIntersected = lvna[intersectedWordIndex]
+
+        indexInter = 0
+        for inte in wordIntersected.intersections:
+            if inte.intersectedID == var.id:
+                indexInter = inte.index
+        wordIntersected.letters[indexInter] = var.letters[inter.index]
+        wordIntersected.empty = False
+
+        lvna[intersectedWordIndex] = wordIntersected
+
+    return lvna
+
+
 # main function for the backtracking forward checking algorithm
 #@profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
@@ -375,49 +450,58 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
         return lva, 1
 
     lvna.sort(key=lambda x: x.remainingValues)
+    lvnaBackup = copy.copy(lvna)
 
-    #printCrossword(crosswordRestrictions)
+    printCrossword(crosswordRestrictions)
     var = lvna[0]
+    varBackup = copy.copy(var)
+
+    if var.pos[0] == 2 and var.pos[1] == 0:
+        print("aquí")
 
     domainValues = domain(var, d)
+    np.random.shuffle(domainValues)
     for cWord in domainValues:
 
-        if not restrictionsOK(var, cWord, lva, 0):
+        if not restrictionsOK(var, cWord, lva, 0, lvna):
             continue
 
+        #varBackup = copy.copy(var)
         var.letters = cWord.tolist()
+        var.empty = False
         crosswordRestrictionsBackup = copy.copy(crosswordRestrictions)
         crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
 
         updateDomainsResult = updateDomains(var, lvna, crosswordRestrictions, d)
 
         if updateDomainsResult is None:
-            var.letters = [0] * var.length
-            #crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
+            var = varBackup
             crosswordRestrictions = crosswordRestrictionsBackup
             continue
 
+        lvna = updateLvnaIntersections(var, lvna)
+
         lva = insertLva(lva, var, cWord)
+
+
+        nextVarBackup = None
+        if len(lvna) > 1:
+            nextVarBackup = copy.copy(lvna[1])
+        crosswordRestrictionsBackup = copy.copy(crosswordRestrictions)
         lva, r = backtrackingForwardChecking(lva, lvna[1:], updateDomainsResult, r, crosswordRestrictions)
         if r == 1:
             return lva, r
+        else:
+            crosswordRestrictions = crosswordRestrictionsBackup
+            lvna[1] = nextVarBackup
 
     # deleting the found value for current var if
     # it was  a dead-end on deeper calls of the function
     if r == 0 and var.id in lva:
         lva.pop(var.id)
+    #lvna[0] = varBackup
 
     return lva, 0
-
-
-# Creating a domain for each variable
-def createDomains(dict, words):
-    domains = {}
-    for w in words:
-        domains[w.id] = dict[w.length]
-        w.remainingValues = dict[w.length].shape[0]
-
-    return domains, words
 
 
 #@profile
@@ -445,7 +529,7 @@ def main(crosswordName, dicName):
     BTstart = time.time()
     # lva, r = backtracking({}, words, domains, 0, crossword)
     # crossword = storeLvaToCrossword(lva, crossword)
-    # printCrossword(crossword)
+    #printCrossword(crossword)
     BTend = time.time()
     tempsBT = BTend - BTstart
 
@@ -466,13 +550,28 @@ def main(crosswordName, dicName):
 
 
 if __name__ == '__main__':
+<<<<<<< HEAD
+    #print("CROSSWORD 7")
+    #main("crossword_7.txt", "diccionari_A.txt")
+    #print("CROSSWORD 8")
+    #main("crossword_8.txt", "diccionari_A.txt")
+    #print("CROSSWORD 9")
+    #main("crossword_9.txt", "diccionari_A.txt")
+    #print("CROSSWORD 10")
+    #main("crossword_10.txt", "diccionari_A.txt")
+    print("CROSSWORD A")
+    main("crossword_A_v2.txt", "diccionari_A.txt")
+    #print("CROSSWORD A")
+    #main("crossword_A_v2.txt", "diccionari_A.txt")
+=======
     print("CROSSWORD 7")
     main("crossword_7.txt", "diccionari_A.txt")
-    print("CROSSWORD 8")
-    main("crossword_8.txt", "diccionari_A.txt")
-    print("CROSSWORD 9")
-    main("crossword_9.txt", "diccionari_A.txt")
-    print("CROSSWORD 10")
-    main("crossword_10.txt", "diccionari_A.txt")
-    print("CROSSWORD 12")
-    main("crossword_12.txt", "diccionari_A.txt")
+    # print("CROSSWORD 8")
+    # main("crossword_8.txt", "diccionari_A.txt")
+    # print("CROSSWORD 9")
+    # main("crossword_9.txt", "diccionari_A.txt")
+    # print("CROSSWORD 10")
+    # main("crossword_10.txt", "diccionari_A.txt")
+    # print("CROSSWORD 12")
+    # main("crossword_12.txt", "diccionari_A.txt")
+>>>>>>> f0bc0e3318cb4b0eb73e1b67e9cae89f5df62cbf
