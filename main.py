@@ -395,6 +395,7 @@ def createDomains(dict, words):
     return domains, words
 
 def main(crosswordName, dicName):
+    #np.random.seed(31)
     realStart = time.time()
 
     crossword = read_crossword(crosswordName)
@@ -428,7 +429,7 @@ def main(crosswordName, dicName):
     realEnd = time.time()
     temps = realEnd - realStart
 
-    print("Backtracking: ", tempsBT, "seconds")
+    #print("Backtracking: ", tempsBT, "seconds")
     print("Forward Checking: ", tempsFC, "seconds")
     print("Total elapsed time: ", temps, "seconds")
 
