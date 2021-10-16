@@ -32,27 +32,6 @@ class Word:
 ### FETCHING DATA
 #################
 
-
-# selects input test
-def selectTest(crosswordName, dicName):
-    # crossword = "crossword_CB_v2.txt"
-    # diccionari = "diccionari_CB_v2.txt"
-
-    # crossword = "crossword_7.txt"
-    # diccionari = "diccionari_A.txt"
-    #
-    # crossword = "crossword_8.txt"
-    # diccionari = "diccionari_A.txt"
-    #
-    # crossword = "crossword_9.txt"
-    # diccionari = "diccionari_A.txt"
-    #
-    # crossword = "crossword_10.txt"
-    # diccionari = "diccionari_A.txt"
-
-    return crosswordName, dicName
-
-
 # Reading crossword and turning it into a nparray
 def read_crossword(crossword):
     table = []
@@ -295,7 +274,6 @@ def insertLva(lva, var, cWord):
 
 
 # main function of the backtracking algorithm
-#@profile
 def backtracking(lva, lvna, d, r, crossword):
     # crossword = storeLvaToCrossword(lva, crossword)
     # printCrossword(crossword)
@@ -325,7 +303,6 @@ def backtracking(lva, lvna, d, r, crossword):
 
 # Used in forward checking, it updates all the domains that
 # variables restricted by the current one will have
-#@profile
 def updateDomains(var, lvna, cr, d):
     isDomainOk = True
     dTemp = copy.copy(d)
@@ -369,20 +346,17 @@ def updateDomains(var, lvna, cr, d):
 
 
 # main function for the backtracking forward checking algorithm
-#@profile
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
         return lva, 1
 
     lvna.sort(key=lambda x: x.remainingValues)
 
-    #printCrossword(crosswordRestrictions)
     var = lvna[0]
 
     domainValues = domain(var, d)
     np.random.shuffle(domainValues)
     for cWord in domainValues:
-
         if not restrictionsOK(var, cWord, lva, 0):
             continue
 
@@ -420,37 +394,30 @@ def createDomains(dict, words):
 
     return domains, words
 
-
-#@profile
 def main(crosswordName, dicName):
     realStart = time.time()
 
-    crosswordPath, dicPath = selectTest(crosswordName, dicName)
-
-    crossword = read_crossword(crosswordPath)
+    crossword = read_crossword(crosswordName)
 
     horizontalWords = lookupHorizontalVariables(crossword, 0)
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
 
     words = horizontalWords + verticalWords
-    #words.sort(key=lambda x: x.intersectionsNumber, reverse=True)
-    #words.sort(key=lambda x: x.length)
-    # random.shuffle(words)
 
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
-    dict = fillupDictionary(dicPath)
+    dict = fillupDictionary(dicName)
     domains, words = createDomains(dict, words)
 
-
+    #Time backtricking
     BTstart = time.time()
-    # lva, r = backtracking({}, words, domains, 0, crossword)
-    # crossword = storeLvaToCrossword(lva, crossword)
-    # printCrossword(crossword)
+    lva, r = backtracking({}, words, domains, 0, crossword)
+    crossword = storeLvaToCrossword(lva, crossword)
+    printCrossword(crossword)
     BTend = time.time()
     tempsBT = BTend - BTstart
 
-
+    #Time backtracking + Forward Checking
     FCstart = time.time()
     lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
     crossword = storeLvaToCrossword(lva, crossword)
@@ -467,6 +434,8 @@ def main(crosswordName, dicName):
 
 
 if __name__ == '__main__':
+    print("CROSSWORD CB")
+    main("crossword_CB_v2.txt", "diccionari_CB_v2.txt")
     #print("CROSSWORD 7")
     #main("crossword_7.txt", "diccionari_A.txt")
     #print("CROSSWORD 8")
@@ -475,5 +444,9 @@ if __name__ == '__main__':
     #main("crossword_9.txt", "diccionari_A.txt")
     #print("CROSSWORD 10")
     #main("crossword_10.txt", "diccionari_A.txt")
-    print("CROSSWORD 12")
-    main("crossword_12.txt", "diccionari_A.txt")
+    #print("CROSSWORD 12")
+    #main("crossword_12.txt", "diccionari_A.txt")
+
+    #Coment Backtraking for CROSWORD A
+    #print("CROSSWORD A")
+    #main("crossword_A_v2.txt", "diccionari_A.txt")
