@@ -410,12 +410,12 @@ def main(crosswordName, dicName):
     domains, words = createDomains(dict, words)
 
     #Time backtricking
-    BTstart = time.time()
-    lva, r = backtracking({}, words, domains, 0, crossword)
-    crossword = storeLvaToCrossword(lva, crossword)
-    printCrossword(crossword)
-    BTend = time.time()
-    tempsBT = BTend - BTstart
+    #BTstart = time.time()
+    #lva, r = backtracking({}, words, domains, 0, crossword)
+    #crossword = storeLvaToCrossword(lva, crossword)
+    #printCrossword(crossword)
+    #BTend = time.time()
+    #tempsBT = BTend - BTstart
 
     #Time backtracking + Forward Checking
     FCstart = time.time()
@@ -434,19 +434,10 @@ def main(crosswordName, dicName):
 
 
 if __name__ == '__main__':
-    print("CROSSWORD CB")
-    main("crossword_CB_v2.txt", "diccionari_CB_v2.txt")
-    #print("CROSSWORD 7")
-    #main("crossword_7.txt", "diccionari_A.txt")
-    #print("CROSSWORD 8")
-    #main("crossword_8.txt", "diccionari_A.txt")
-    #print("CROSSWORD 9")
-    #main("crossword_9.txt", "diccionari_A.txt")
-    #print("CROSSWORD 10")
-    #main("crossword_10.txt", "diccionari_A.txt")
-    #print("CROSSWORD 12")
-    #main("crossword_12.txt", "diccionari_A.txt")
+
+    #print("CROSSWORD CB")
+    #main("crossword_CB_v2.txt", "diccionari_CB_v2.txt")
 
     #Coment Backtraking for CROSWORD A
-    #print("CROSSWORD A")
-    #main("crossword_A_v2.txt", "diccionari_A.txt")
+    print("CROSSWORD A")
+    main("crossword_A_v2.txt", "diccionari_A.txt")
