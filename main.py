@@ -380,6 +380,7 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     var = lvna[0]
 
     domainValues = domain(var, d)
+    np.random.shuffle(domainValues)
     for cWord in domainValues:
 
         if not restrictionsOK(var, cWord, lva, 0):
@@ -466,13 +467,13 @@ def main(crosswordName, dicName):
 
 
 if __name__ == '__main__':
-    print("CROSSWORD 7")
-    main("crossword_7.txt", "diccionari_A.txt")
-    print("CROSSWORD 8")
-    main("crossword_8.txt", "diccionari_A.txt")
-    print("CROSSWORD 9")
-    main("crossword_9.txt", "diccionari_A.txt")
-    print("CROSSWORD 10")
-    main("crossword_10.txt", "diccionari_A.txt")
+    #print("CROSSWORD 7")
+    #main("crossword_7.txt", "diccionari_A.txt")
+    #print("CROSSWORD 8")
+    #main("crossword_8.txt", "diccionari_A.txt")
+    #print("CROSSWORD 9")
+    #main("crossword_9.txt", "diccionari_A.txt")
+    #print("CROSSWORD 10")
+    #main("crossword_10.txt", "diccionari_A.txt")
     print("CROSSWORD 12")
     main("crossword_12.txt", "diccionari_A.txt")
