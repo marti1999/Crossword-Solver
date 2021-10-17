@@ -235,8 +235,6 @@ def storeWordToCrossword(word, crossword):
 def printCrossword(crossword):
     print('\n'.join([''.join(['{:4}'.format(chr(item))
                               for item in row]) for row in crossword]))
-    print("\n\n")
-
 
 #################################
 ### MAIN FUNCTIONS OF THE PROGRAM
@@ -368,7 +366,6 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
 
         if updateDomainsResult is None:
             var.letters = [0] * var.length
-            #crosswordRestrictions = storeWordToCrossword(var, crosswordRestrictions)
             crosswordRestrictions = crosswordRestrictionsBackup
             continue
 
@@ -394,51 +391,55 @@ def createDomains(dict, words):
 
     return domains, words
 
-def main(crosswordName, dicName):
+def main(crosswordName, dicName, isForwardChecking):
     #np.random.seed(31)
-    realStart = time.time()
+    totalStart = time.time()
 
     crossword = read_crossword(crosswordName)
 
     horizontalWords = lookupHorizontalVariables(crossword, 0)
     verticalWords = lookupVerticalVariables(crossword, len(horizontalWords))
-
     words = horizontalWords + verticalWords
-
     words = lookupIntersections(words, horizontalWords, verticalWords, crossword)
 
     dict = fillupDictionary(dicName)
     domains, words = createDomains(dict, words)
 
-    #Time backtricking
-    #BTstart = time.time()
-    #lva, r = backtracking({}, words, domains, 0, crossword)
-    #crossword = storeLvaToCrossword(lva, crossword)
-    #printCrossword(crossword)
-    #BTend = time.time()
-    #tempsBT = BTend - BTstart
+    if not isForwardChecking:
+        BTstart = time.time()
 
-    #Time backtracking + Forward Checking
-    FCstart = time.time()
-    lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
-    crossword = storeLvaToCrossword(lva, crossword)
-    printCrossword(crossword)
-    FCend = time.time()
-    tempsFC = FCend - FCstart
+        lva, r = backtracking({}, words, domains, 0, crossword)
+        crossword = storeLvaToCrossword(lva, crossword)
+        printCrossword(crossword)
 
-    realEnd = time.time()
-    temps = realEnd - realStart
+        BTend = time.time()
+        BTelapsedTime = BTend - BTstart
+        print("\nBacktracking: ", BTelapsedTime, "seconds")
 
-    #print("Backtracking: ", tempsBT, "seconds")
-    print("Forward Checking: ", tempsFC, "seconds")
-    print("Total elapsed time: ", temps, "seconds")
+    else:
+        FCstart = time.time()
+
+        lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
+        crossword = storeLvaToCrossword(lva, crossword)
+        printCrossword(crossword)
+
+        FCend = time.time()
+        FCelapsedTime = FCend - FCstart
+        print("\nForward Checking: ", FCelapsedTime, "seconds")
+
+    totalEnd = time.time()
+    totalElapsedTime = totalEnd - totalStart
+
+    print("Total elapsed time: ", totalElapsedTime, "seconds\n\n")
 
 
 if __name__ == '__main__':
 
-    #print("CROSSWORD CB")
-    #main("crossword_CB_v2.txt", "diccionari_CB_v2.txt")
+    print("CROSSWORD CB Backtracking\n")
+    main("crossword_CB_v2.txt", "diccionari_CB_v2.txt", False)
 
-    #Coment Backtraking for CROSWORD A
-    print("CROSSWORD A")
-    main("crossword_A_v2.txt", "diccionari_A.txt")
+    print("CROSSWORD CB Forward Checking\n")
+    main("crossword_CB_v2.txt", "diccionari_CB_v2.txt", True)
+
+    print("CROSSWORD A Forward Checking\n")
+    main("crossword_A_v2.txt", "diccionari_A.txt", True)
