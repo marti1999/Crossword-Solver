@@ -170,10 +170,10 @@ def fillupDictionary(dictPath):
 
     dict = {}
 
-    for line in open(dictPath):
+    for line in open(dictPath, encoding="Windows-1252"):
         word = line[:-1]
         size = len(word)
-        byteArr = bytearray(word, 'ansi')
+        byteArr = bytearray(word, 'Windows-1252')
         asciiWord = list(byteArr)
 
         if size in dict:
