@@ -1,6 +1,7 @@
 import copy
 import multiprocessing
 import random
+import signal
 
 import numpy as np
 import time
@@ -409,13 +410,35 @@ def shuffleDomains(d):
         d[k] = v
     return d
 
-def handlingLongCrossWord(words, domains, crossword):
 
-    # utilitzant processos i no threads pel fet de que no comparteixen variables. Sinó el pas per referència ho engega a pendre vent.
+def handler(signum, frame):
+    print("Not finished yet, time to kill it")
+    raise Exception("end of time")
+
+
+def handlingLongCrosswordSignal(words, domains, crossword):
+
+    # only works on UNIX
+
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(1)
+
+    try:
+        backtrackingForwardChecking({}, copy.deepcopy(words), copy.deepcopy(domains), 0, copy.deepcopy(crossword))
+    except Exception as exc:
+        print(exc)
+        handlingLongCrosswordSignal(words, domains, crossword)
+
+
+def handlingLongCrosswordJoin(words, domains, crossword):
+
+    # utilitzant processos i no threads pel fet de que no comparteixen variables.
+    # Sinó el pas per referència ho engega a prendre vent.
+
     p = multiprocessing.Process(target=backtrackingForwardChecking, args=({}, words, domains, 0, crossword))
     p.start()
 
-    p.join(0.25)
+    p.join(1)
 
     if p.is_alive():
         #print("\nnot finished yet, time to kill it")
@@ -423,8 +446,7 @@ def handlingLongCrossWord(words, domains, crossword):
         p.kill()
         p.join()
         domains = shuffleDomains(domains)
-        handlingLongCrossWord(words, domains, crossword)
-
+        handlingLongCrosswordJoin(words, domains, crossword)
 
 
 def main(crosswordName, dicName, isForwardChecking):
@@ -454,7 +476,8 @@ def main(crosswordName, dicName, isForwardChecking):
     else:
         FCstart = time.time()
         if crosswordName == "crossword_A_v2.txt":
-            handlingLongCrossWord(words, domains, crossword)
+            handlingLongCrosswordJoin(words, domains, crossword)
+            #handlingLongCrosswordSignal(words, domains, crossword)
         else:
 
             lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
