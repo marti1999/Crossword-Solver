@@ -1,4 +1,8 @@
 import copy
+import multiprocessing
+import random
+import signal
+
 import numpy as np
 import time
 # https://plugins.jetbrains.com/plugin/16536-line-profiler
@@ -183,6 +187,7 @@ def fillupDictionary(dictPath):
 
     # Transforming list into numpy array
     for k, v in dict.items():
+        random.shuffle(v)
         numpyArr = np.array(v, dtype=np.uint8)
         dict[k] = numpyArr
 
@@ -346,14 +351,21 @@ def updateDomains(var, lvna, cr, d):
 # main function for the backtracking forward checking algorithm
 def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
     if not lvna:
+        printCrossword(crosswordRestrictions)
         return lva, 1
+
+    # printCrossword(crosswordRestrictions)
+    # print("\n\n")
 
     lvna.sort(key=lambda x: x.remainingValues)
 
     var = lvna[0]
 
     domainValues = domain(var, d)
-    np.random.shuffle(domainValues)
+
+    #np.random.shuffle(domainValues)
+
+
     for cWord in domainValues:
         if not restrictionsOK(var, cWord, lva, 0):
             continue
@@ -391,9 +403,54 @@ def createDomains(dict, words):
 
     return domains, words
 
+
+def shuffleDomains(d):
+    for k, v in d.items():
+        np.random.shuffle(v)
+        d[k] = v
+    return d
+
+
+def handler(signum, frame):
+    print("Not finished yet, time to kill it")
+    raise Exception("end of time")
+
+
+def handlingLongCrosswordSignal(words, domains, crossword):
+
+    # only works on UNIX
+
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(1)
+
+    try:
+        backtrackingForwardChecking({}, copy.deepcopy(words), copy.deepcopy(domains), 0, copy.deepcopy(crossword))
+    except Exception as exc:
+        print(exc)
+        handlingLongCrosswordSignal(words, domains, crossword)
+
+
+def handlingLongCrosswordJoin(words, domains, crossword):
+
+    # utilitzant processos i no threads pel fet de que no comparteixen variables.
+    # Sinó el pas per referència ho engega a prendre vent.
+
+    p = multiprocessing.Process(target=backtrackingForwardChecking, args=({}, words, domains, 0, crossword))
+    p.start()
+
+    p.join(1)
+
+    if p.is_alive():
+        #print("\nnot finished yet, time to kill it")
+        #p.terminate()
+        p.kill()
+        p.join()
+        domains = shuffleDomains(domains)
+        handlingLongCrosswordJoin(words, domains, crossword)
+
+
 def main(crosswordName, dicName, isForwardChecking):
-    #np.random.seed(31)
-    totalStart = time.time()
+    startTime = time.time()
 
     crossword = read_crossword(crosswordName)
 
@@ -418,17 +475,20 @@ def main(crosswordName, dicName, isForwardChecking):
 
     else:
         FCstart = time.time()
+        if crosswordName == "crossword_A_v2.txt":
+            handlingLongCrosswordJoin(words, domains, crossword)
+            #handlingLongCrosswordSignal(words, domains, crossword)
+        else:
 
-        lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
-        crossword = storeLvaToCrossword(lva, crossword)
-        printCrossword(crossword)
-
+            lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
+            crossword = storeLvaToCrossword(lva, crossword)
+            # printCrossword(crossword)
         FCend = time.time()
         FCelapsedTime = FCend - FCstart
         print("\nForward Checking: ", FCelapsedTime, "seconds")
 
-    totalEnd = time.time()
-    totalElapsedTime = totalEnd - totalStart
+    endTime = time.time()
+    totalElapsedTime = endTime - startTime
 
     print("Total elapsed time: ", totalElapsedTime, "seconds\n\n")
 
