@@ -354,17 +354,11 @@ def backtrackingForwardChecking(lva, lvna, d, r, crosswordRestrictions):
         printCrossword(crosswordRestrictions)
         return lva, 1
 
-    # printCrossword(crosswordRestrictions)
-    # print("\n\n")
-
     lvna.sort(key=lambda x: x.remainingValues)
 
     var = lvna[0]
 
     domainValues = domain(var, d)
-
-    #np.random.shuffle(domainValues)
-
 
     for cWord in domainValues:
         if not restrictionsOK(var, cWord, lva, 0):
@@ -410,12 +404,12 @@ def shuffleDomains(d):
         d[k] = v
     return d
 
-
+# Handler used on signal
 def handler(signum, frame):
-    print("Not finished yet, time to kill it")
     raise Exception("end of time")
 
 
+# Handling function timeout using SIGALRM
 def handlingLongCrosswordSignal(words, domains, crossword):
 
     # only works on UNIX
@@ -430,10 +424,10 @@ def handlingLongCrosswordSignal(words, domains, crossword):
         handlingLongCrosswordSignal(words, domains, crossword)
 
 
+# Handling function timeout using Process.join()
 def handlingLongCrosswordJoin(words, domains, crossword):
 
-    # utilitzant processos i no threads pel fet de que no comparteixen variables.
-    # Sinó el pas per referència ho engega a prendre vent.
+    # Using processes and not threads because formers don't share variables.
 
     p = multiprocessing.Process(target=backtrackingForwardChecking, args=({}, words, domains, 0, crossword))
     p.start()
@@ -441,8 +435,6 @@ def handlingLongCrosswordJoin(words, domains, crossword):
     p.join(1)
 
     if p.is_alive():
-        #print("\nnot finished yet, time to kill it")
-        #p.terminate()
         p.kill()
         p.join()
         domains = shuffleDomains(domains)
@@ -477,12 +469,9 @@ def main(crosswordName, dicName, isForwardChecking):
         FCstart = time.time()
         if crosswordName == "crossword_A_v2.txt":
             handlingLongCrosswordJoin(words, domains, crossword)
-            #handlingLongCrosswordSignal(words, domains, crossword)
         else:
 
             lva, r = backtrackingForwardChecking({}, words, domains, 0, crossword)
-            crossword = storeLvaToCrossword(lva, crossword)
-            # printCrossword(crossword)
         FCend = time.time()
         FCelapsedTime = FCend - FCstart
         print("\nForward Checking: ", FCelapsedTime, "seconds")
