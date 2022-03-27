@@ -14,4 +14,4 @@ The input crosswor file must look like this:
 0	0	0	0	0	# 
 ```
 - 0 indicates a character
-- # indicates a separator
+- \# indicates a separator
