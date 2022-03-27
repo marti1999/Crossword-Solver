@@ -4,7 +4,7 @@ It also features a somewhat probabilistic algorythim. The words in the dictionar
 
 
 
-The input crosswor file must look like this:
+The input crossword file must look like this:
 ```
 0	0	0	0	0	0
 0	#	#	0	#	0
