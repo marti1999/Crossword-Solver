@@ -18,7 +18,7 @@ The input crossword file must look like this:
 - 0 indicates a character
 - \# indicates a separator
 
-The program also needs a dictionary with all the available words. The current one is in catalan, but it may be replaced by another as long as if follows the same format. Note that it need to be encoded with ISO 8859-1
+The program also needs a dictionary with all the available words. The current one is in catalan, but it may be replaced by another as long as it follows the same format. Note that it needs to be encoded with ISO 8859-1 if special characters are to be used.
 
 
 ### How to execute
